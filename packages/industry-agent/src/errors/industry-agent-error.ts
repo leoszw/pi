@@ -3,7 +3,9 @@ export type IndustryAgentErrorCode =
 	| "DUPLICATE_TOOL"
 	| "TOOL_NOT_FOUND"
 	| "REPOSITORY_ERROR"
-	| "AGENT_EXECUTION_ERROR";
+	| "AGENT_EXECUTION_ERROR"
+	| "TRACE_NOT_FOUND"
+	| "TRACE_ACCESS_DENIED";
 
 export interface IndustryAgentErrorOptions {
 	cause?: unknown;

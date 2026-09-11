@@ -1,4 +1,4 @@
--- PI Industry Agent - Phase 0 rollback
+-- PI Industry Agent - Phase 0 / Phase 1 rollback
 -- REVIEW STATUS: GENERATED FOR STATIC REVIEW ONLY. NOT EXECUTED.
 
 DROP TABLE IF EXISTS agent_error;

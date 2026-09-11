@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added a `Centered` component that renders a child in a column capped at a max width, horizontally centered, with mouse coordinates translated by the left pad. Terminals at or below the cap render unchanged.
+
 ## [0.85.1] - 2026-09-05
 
 ### Added

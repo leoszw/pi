@@ -12,6 +12,7 @@ export {
 // Components
 export { Box } from "./components/box.ts";
 export { CancellableLoader } from "./components/cancellable-loader.ts";
+export { Centered, type CenteredMaxWidth } from "./components/centered.ts";
 export { Editor, type EditorOptions, type EditorTheme } from "./components/editor.ts";
 export { HStack } from "./components/h-stack.ts";
 export { Image, type ImageOptions, type ImageTheme } from "./components/image.ts";

@@ -143,6 +143,7 @@ export interface Settings {
 	thinkingBudgets?: ThinkingBudgetsSettings; // Custom token budgets for thinking levels
 	editorPaddingX?: number; // Horizontal padding for input editor (default: 0)
 	outputPad?: 0 | 1; // Horizontal padding for chat message output (default: 1)
+	chatMaxWidth?: number; // Max conversation width in columns; wider terminals center it (0 = full width, default: 120)
 	autocompleteMaxVisible?: number; // Max visible items in autocomplete dropdown (default: 5)
 	showHardwareCursor?: boolean; // Show terminal cursor while still positioning it for IME
 	markdown?: MarkdownSettings;
@@ -1361,6 +1362,12 @@ export class SettingsManager {
 
 	getEditorPaddingX(): number {
 		return this.settings.editorPaddingX ?? 0;
+	}
+
+	getChatMaxWidth(): number {
+		const value = this.settings.chatMaxWidth;
+		if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return 120;
+		return Math.floor(value);
 	}
 
 	setEditorPaddingX(padding: number): void {

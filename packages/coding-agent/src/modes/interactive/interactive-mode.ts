@@ -24,6 +24,7 @@ import type {
 } from "@earendil-works/pi-tui";
 import * as TuiLayouts from "@earendil-works/pi-tui";
 import {
+	Centered,
 	CombinedAutocompleteProvider,
 	type Component,
 	Container,
@@ -873,14 +874,26 @@ export class InteractiveMode {
 
 		// Keep one component tree and remount it when changing renderers.
 		this.renderWidgets(); // Initialize with default spacer
+		// Center the conversation on one axis: transcript and every dock section
+		// share the same capped width, so wide terminals get a centered chat
+		// column while terminals at or below chatMaxWidth render unchanged.
+		const centered = (component: Component): Centered =>
+			new Centered(component, () => this.settingsManager.getChatMaxWidth());
+		const centeredDocument = centered(this.documentContainer);
+		const centeredPendingMessages = centered(this.pendingMessagesContainer);
+		const centeredStatus = centered(this.statusContainer);
+		const centeredWidgetsAbove = centered(this.widgetContainerAbove);
+		const centeredEditor = centered(this.editorContainer);
+		const centeredWidgetsBelow = centered(this.widgetContainerBelow);
+		const centeredFooter = centered(this.footerContainer);
 		const viewport = createChatViewport({
-			document: this.documentContainer,
-			pendingMessages: this.pendingMessagesContainer,
-			status: this.statusContainer,
-			widgetsAbove: this.widgetContainerAbove,
-			editor: this.editorContainer,
-			widgetsBelow: this.widgetContainerBelow,
-			footer: this.footerContainer,
+			document: centeredDocument,
+			pendingMessages: centeredPendingMessages,
+			status: centeredStatus,
+			widgetsAbove: centeredWidgetsAbove,
+			editor: centeredEditor,
+			widgetsBelow: centeredWidgetsBelow,
+			footer: centeredFooter,
 			scrollbar: this.settingsManager.getFullscreenScrollbar(),
 			scrollbarTrackStyle: (text) => theme.fg("scrollbarTrack", text),
 			scrollbarThumbStyle: (text) => theme.fg("scrollbarThumb", text),
@@ -888,13 +901,13 @@ export class InteractiveMode {
 		this.transcriptScrollView = viewport.transcript;
 		this.fullscreenLayoutRoot = viewport.root;
 		this.mountInteractiveTui(this.renderer, [
-			this.documentContainer,
-			this.pendingMessagesContainer,
-			this.statusContainer,
-			this.widgetContainerAbove,
-			this.editorContainer,
-			this.widgetContainerBelow,
-			this.footerContainer,
+			centeredDocument,
+			centeredPendingMessages,
+			centeredStatus,
+			centeredWidgetsAbove,
+			centeredEditor,
+			centeredWidgetsBelow,
+			centeredFooter,
 		]);
 		// Accept text while startup completes, but only enable interrupt, exit, and submission feedback.
 		this.defaultEditor.onAction("app.clear", () => this.handleCtrlC());

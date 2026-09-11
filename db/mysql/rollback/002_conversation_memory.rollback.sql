@@ -1,0 +1,6 @@
+-- PI Industry Agent - Phase 0 rollback
+-- REVIEW STATUS: GENERATED FOR STATIC REVIEW ONLY. NOT EXECUTED.
+
+DROP TABLE IF EXISTS memory_link;
+DROP TABLE IF EXISTS memory_item;
+DROP TABLE IF EXISTS conversation;

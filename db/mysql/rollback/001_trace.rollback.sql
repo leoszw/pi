@@ -1,0 +1,9 @@
+-- PI Industry Agent - Phase 0 rollback
+-- REVIEW STATUS: GENERATED FOR STATIC REVIEW ONLY. NOT EXECUTED.
+
+DROP TABLE IF EXISTS agent_error;
+DROP TABLE IF EXISTS retrieval_event;
+DROP TABLE IF EXISTS tool_call;
+DROP TABLE IF EXISTS llm_call;
+DROP TABLE IF EXISTS agent_span;
+DROP TABLE IF EXISTS agent_trace;

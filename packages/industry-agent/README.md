@@ -6,30 +6,34 @@ Phase 0 established request context creation, shared contracts, the Pi Agent gat
 
 Phase 1 added request-scoped observability with Pi Telemetry integration, structured LLM/Tool/Retrieval/Error records, token/cost aggregation, redaction, and trace detail/timeline/tree/stats query services.
 
-Phase 2 adds a deterministic semantic layer between natural language and business tools:
+Phase 2 added the deterministic `SemanticFrame` layer, Context Resolver, normalization, canonical hard/soft constraints, parse fallback, and Trace integration.
 
-- `QueryParser` produces a stable `SemanticFrame`;
-- chainage normalization (`K12+300 -> 12300`, range normalization included);
-- side normalization with hard/soft confidence rules;
-- engineering unit normalization;
-- BOQ code normalization;
-- date and relative-date normalization;
-- project/segment context resolution;
-- deictic context references such as “这个 / 那些 / 刚才的”;
-- canonical JSON ordering and hard-filter generation;
-- parse failures fall back to an `UNKNOWN` frame instead of blocking the Agent request;
-- each constraint preserves `confidence`, `source`, and `mode`;
-- only hard constraints are emitted into `filters`.
+Phase 3 adds the entity data foundation used by later retrieval phases:
 
-Request-context `project_id` remains an authoritative hard scope. A conflicting project mentioned in semantic context is kept only as a soft candidate so semantic parsing cannot expand an already-scoped request across projects.
+- canonical entities for engineering positions and BOQ items;
+- tenant/company/project/industry scope carried with every entity;
+- business aliases with NFKC normalization and confidence/source metadata;
+- real parent hierarchy traversal with cycle/max-depth guards and no invented missing parents;
+- source-system/source-version/index-version metadata;
+- OpenSearch embedding metadata only in MySQL-facing contracts; vectors remain outside MySQL;
+- ontology items for versioned industry dictionaries;
+- source adapters from the reviewed engineering-position and BOQ retrieval views;
+- in-memory Entity Repository for application tests before a real MySQL adapter exists.
 
-The Gateway records the generated `SemanticFrame` into the Phase 1 trace and passes it to the runtime factory as an optional third argument. Existing runtime factories that only consume `RequestContext` remain valid.
-
-Entity persistence/search, OpenSearch hybrid retrieval, mutation execution, and RAG remain outside Phase 2.
+Phase 3 deliberately does **not** implement Exact/BM25/Dense/RRF/Rerank. Those begin in the engineering-position and BOQ retrieval phases.
 
 ## Database rule
 
-The package still does not connect to MySQL. Existing SQL files remain generated and statically reviewed only; no migration or DDL/DML is executed in Phase 2.
+The package still does not connect to MySQL. Phase 3 only generates and statically reviews:
+
+- `003_entity_ontology.sql` and rollback;
+- `004_retrieval.sql` and rollback;
+- `views/engineering_position_source.sql`;
+- `views/boq_source.sql`.
+
+The engineering view maps category/type IDs to Chinese dictionary names and orders numeric chainage with `LEAST/GREATEST`. The BOQ view maps `section_id` to `section_name` and emits normalized identity fields. Both views keep delete state visible for incremental OpenSearch synchronization. Quantity/price/amount fields remain authoritative-source facts and must not become embedding facts.
+
+No migration, DDL, DML, or database connection is executed in Phase 3.
 
 ## Temporary workspace registration
 

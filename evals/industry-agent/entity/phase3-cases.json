@@ -1,0 +1,7 @@
+[
+  {"id":"entity-large-id","entity_type":"ENGINEERING_POSITION","entity_id":"123456789012345678","assert":{"id_type":"string"}},
+  {"id":"entity-scope-project","entity_type":"ENGINEERING_POSITION","query_scope":{"tenant_id":"tenant-1","project_id":"project-A"},"candidate_scope":{"tenant_id":"tenant-1","project_id":"project-B"},"assert":{"visible":false}},
+  {"id":"entity-alias-nfkc","alias":"0＃ 盖梁","query":"0# 盖梁","assert":{"same_normalized_alias":true}},
+  {"id":"entity-missing-parent","entity_type":"BOQ_ITEM","code":"203-1-a-1","missing_parent_code":"203-1-a","assert":{"invent_parent":false,"hierarchy_incomplete":true}},
+  {"id":"entity-embedding-meta-only","entity_type":"ENGINEERING_POSITION","embedding_dimension":1024,"assert":{"mysql_vector_field":false,"index_version_required":true}}
+]

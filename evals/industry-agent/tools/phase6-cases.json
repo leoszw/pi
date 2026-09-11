@@ -1,0 +1,10 @@
+[
+  {"id":"engineering-search-scope","tool":"search_engineering_positions","input":{"query":"右幅盖梁"},"expected":{"project_from_request_context":true,"scope_override_rejected":true}},
+  {"id":"engineering-get-evidence","tool":"get_engineering_position","input":{"engineeringId":"470359026153164801"},"expected":{"id_type":"string","evidence_required":["sourceId","sourceVersion"]}},
+  {"id":"boq-search-server-catalog","tool":"search_boq","input":{"query":"403-2-a"},"expected":{"catalog_from_server":true,"project_from_request_context":true}},
+  {"id":"boq-get-evidence","tool":"get_boq_item","input":{"ledgerId":"670701177435987968"},"expected":{"id_type":"string","evidence_required":["sourceId","sourceVersion"]}},
+  {"id":"quantity-authoritative-read","tool":"query_quantity","input":{"entityType":"BOQ_ITEM","entityId":"670701177435987968","fields":["contract_num"]},"expected":{"preserve_raw_sentinel":true,"unit_and_source_evidence":true}},
+  {"id":"documents-project-scope","tool":"list_project_documents","input":{},"expected":{"project_scope_required":true,"cross_project_results":0}},
+  {"id":"permission-denied","tool":"list_project_documents","input":{},"expected":{"permission_rechecked_server_side":true,"error_code":"TOOL_ACCESS_DENIED"}},
+  {"id":"trace-success-error","expected":{"tool_start_and_end_for_success":true,"tool_start_and_end_for_failure":true}}
+]

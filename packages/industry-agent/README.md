@@ -12,51 +12,35 @@ Phase 3 added the canonical entity foundation: entity/alias/ontology contracts, 
 
 Phase 4 added engineering-position Hybrid Retrieval with Exact/BM25/two Dense arms, Weighted RRF, rerank, business features, confidence/debug output, OpenSearch transport boundaries, indexing orchestration, and benchmark metric utilities.
 
-Phase 5 adds BOQ Hybrid Retrieval:
+Phase 5 added BOQ Hybrid Retrieval with code/catalog routing, hierarchy, shared spec normalization, Exact/Token + BM25 + two Dense arms, active-arm Weighted RRF, rerank/business scoring, independent confidence, lexical degradation, indexing orchestration, and benchmark metrics.
 
-- `operation` (`SEARCH` / `LIST_DESCENDANTS` / `FACT_LOOKUP`) is independent from `queryMode` (`CODE` / `SPEC` / `ITEM_SHORT` / `CONTEXT` / `DEFAULT`);
-- ledger codes are normalized with the same deterministic rules on query and document sides and accepted only after current catalog validation;
-- structural `ancestor_codes` preserve missing code prefixes while `path_names` contain only real existing ancestors, so missing parents are never invented;
-- `is_leaf` is derived from descendants, never from whether a unit exists;
-- shared specification extraction covers concrete/rebar grades, diameter, thickness, percentage and rock class identity tokens;
-- query specifications are not global hard filters: they participate in Exact/Token retrieval, business features and explicit same-family conflict penalties;
-- BOQ Dense text contains name/spec/unit/path/section semantics but excludes ledger code and all price/quantity/amount/change facts;
-- two Dense vectors only: `item_vector[1024]` and `context_vector[1024]` using BGE-M3;
-- versioned BOQ OpenSearch strict mapping and retrieval configuration are checked in under `config/boq`;
-- complete code exact and hierarchy descendant routes are deterministic and can skip Dense retrieval;
-- Hybrid search uses Exact/Token Top30, BM25 Top80, Item Dense Top80, Context Dense Top80;
-- Weighted RRF uses active-arm weight normalization with `k=60`; fusion normalization uses the theoretical upper bound `1/(k+1)` instead of dividing by the current query's Top1;
-- Top50 reranking is followed by applicable-feature-normalized business scoring and critical specification conflict penalties;
-- ranking score uses the reviewed baseline `0.55 rerank + 0.20 fusion + 0.25 business`;
-- confidence is deliberately separate from ranking score and combines rerank margin, arm support, identity match and explicit structural coverage;
-- generic short-name ambiguity, hierarchy gaps, critical spec conflicts and degraded retrieval prevent automatic binding;
-- Embedding or vector-arm failures fall back to available lexical arms; reranker failure falls back to RRF + business features; degraded results never auto-accept;
-- `FACT_LOOKUP` resolves `ledger_id` only. Price, quantity, amount, change values and `-1` sentinel semantics remain the responsibility of the authoritative fact layer / later READ tools;
-- full/incremental indexing supports `(update_time, ledger_id)` cursors, source tombstone deletes and `embedding_input_hash` vector reuse;
-- incremental new/delete/code changes recommend a hierarchy-aware full rebuild because they can change ancestor `has_children/is_leaf`; for the current ~772-item scale full rebuild is the preferred safe path;
-- benchmark utilities report Code Exact Accuracy, Hierarchy Accuracy, Recall@10, Hit@1, MRR, Spec Conflict Top1 Rate, Ambiguity Precision, Zero Result Rate and P50/P95 latency.
+Phase 6 adds READ Tools:
 
-The runtime does **not** directly add BM25, cosine, or reranker raw scores. Large business IDs remain strings end-to-end.
+- `search_engineering_positions` and `search_boq` reuse the Phase 4/5 retrieval services;
+- `get_engineering_position`, `get_boq_item`, `query_quantity`, and `list_project_documents` depend only on read-only repository ports;
+- every ToolDefinition declares version, domain/action, JSON input/output schemas, allowed entity types, permission, server scope rule, risk, confirmation/dry-run/idempotency, timeout, and retry metadata;
+- all six tools are `LOW` risk, idempotent, non-mutating, and never require confirmation;
+- tool arguments cannot override `userId`, `tenantId`, `companyId`, or `projectId`; scope comes only from the server-bound `RequestContext`;
+- the runtime requires all four scope fields and re-checks the tool permission against the exact user/tenant/company/project tuple before data access;
+- BOQ search receives its `BoqQueryCatalog` from a server-side provider rather than from LLM arguments;
+- authoritative read results carry `sourceId/sourceVersion` and optional `updatedAt/unit` evidence;
+- quantity values are returned raw; sentinel values such as `-1` are not reinterpreted by retrieval or tool code;
+- read-tool Trace hooks cover success and failure paths; normal Pi Agent execution is also captured by the existing Phase 1 tool execution events;
+- in-memory permission/data/catalog implementations support tests before real service adapters are connected.
 
-## Phase 5 integration boundaries
+## Phase 6 integration boundaries
 
-`BoqRetrievalService` depends on three ports:
+`ReadToolRuntime` accepts application-provided permission, data, retrieval, catalog and Trace ports. It does not own database credentials, SQL generation, network connections, OpenSearch clients, or model clients. The runtime rejects mutation actions and has no CREATE/UPDATE/DELETE path.
 
-- `BoqRetrievalBackend` for exact-code, descendants, Exact/Token, BM25 and two KNN arms;
-- `BoqEmbeddingProvider` for the query/document Dense vector;
-- `BoqReranker` for normalized cross-encoder scores.
-
-`OpenSearchBoqRetrievalBackend` and `OpenSearchBoqIndexWriter` accept transport interfaces, so the package owns no OpenSearch credentials or connection lifecycle. The checked-in BOQ mapping uses Faiss/HNSW + `cosinesimil` and declares OpenSearch `>=2.19` as the reviewed production baseline.
-
-The BOQ parser requires a versioned `BoqQueryCatalog` containing current `knownCodes` and `knownAncestorCodes`. This is intentional: a three-digit number is not treated as a BOQ code merely because it matches a regex; catalog validation prevents specification values such as `200mm` from being misrouted as codes.
+The first six READ tools require server-bound company and project scope. If either is missing, execution fails closed instead of allowing an LLM-supplied replacement scope.
 
 ## Database and fact rule
 
-Phase 5 adds no new MySQL tables and executes no existing SQL. It consumes the Phase 3 `vw_boq_retrieval_source_all` contract only through application-side types/ports.
+Phase 6 adds no MySQL tables and executes no existing SQL. Real adapters may later read authoritative business MySQL/API data, but this phase only defines read-only ports and mock implementations.
 
-Contract price, contract quantity, contract amount, changed price/quantity/amount, change counts/times, and other authoritative facts are not copied into BOQ embedding or rerank text. Retrieval resolves `ledger_id`; later fact/READ tooling must read authoritative values from the business source and must not reinterpret sentinel values such as `-1` without business rules.
+Contract price/quantity/amount, engineering quantities, changed values and sentinel semantics must come from authoritative read adapters. Retrieval text is never accepted as the source of a business fact.
 
-No migration, DDL, DML, MySQL connection, OpenSearch network request, embedding-model call, or reranker-model call is executed by repository setup itself.
+No migration, DDL, DML, MySQL connection, OpenSearch network request, embedding-model call, reranker-model call, or mutation is executed by repository setup itself.
 
 ## Temporary workspace registration
 

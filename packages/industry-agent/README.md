@@ -6,34 +6,48 @@ Phase 0 established request context creation, shared contracts, the Pi Agent gat
 
 Phase 1 added request-scoped observability with Pi Telemetry integration, structured LLM/Tool/Retrieval/Error records, token/cost aggregation, redaction, and trace detail/timeline/tree/stats query services.
 
-Phase 2 added the deterministic `SemanticFrame` layer, Context Resolver, normalization, canonical hard/soft constraints, parse fallback, and Trace integration.
+Phase 2 added deterministic `SemanticFrame` parsing, context resolution, canonical normalization, hard/soft constraints, and trace integration.
 
-Phase 3 adds the entity data foundation used by later retrieval phases:
+Phase 3 added the canonical entity foundation: entity/alias/ontology contracts, hierarchy and scope handling, source/index versions, engineering/BOQ source adapters, mock repositories, MySQL entity/retrieval metadata DDL, and reviewed retrieval-source views.
 
-- canonical entities for engineering positions and BOQ items;
-- tenant/company/project/industry scope carried with every entity;
-- business aliases with NFKC normalization and confidence/source metadata;
-- real parent hierarchy traversal with cycle/max-depth guards and no invented missing parents;
-- source-system/source-version/index-version metadata;
-- OpenSearch embedding metadata only in MySQL-facing contracts; vectors remain outside MySQL;
-- ontology items for versioned industry dictionaries;
-- source adapters from the reviewed engineering-position and BOQ retrieval views;
-- in-memory Entity Repository for application tests before a real MySQL adapter exists.
+Phase 4 adds engineering-position Hybrid Retrieval:
 
-Phase 3 deliberately does **not** implement Exact/BM25/Dense/RRF/Rerank. Those begin in the engineering-position and BOQ retrieval phases.
+- deterministic `ParsedEngineeringQuery` with project, alignment, chainage, local-side, structural-token, and context hints;
+- hard-filter planning that never relaxes project scope or explicit alignment/chainage constraints;
+- cross-alignment guard so `GK... -> FK...` is not treated as a normal numeric interval;
+- document text builder for `search_text`, `embedding_name_text`, `embedding_context_text`, and `rerank_text`;
+- chainage values are excluded from Dense embedding text but may appear in rerank summaries;
+- two dense vectors only: `name_vector[1024]` and `context_vector[1024]`;
+- versioned retrieval configuration and OpenSearch mapping;
+- Exact Top20, BM25 Top80, Name Dense Top80, Context Dense Top80;
+- query-mode-specific Weighted RRF with `k=60` and Top80 fusion retention;
+- normalized reranker scores plus deterministic business features;
+- final score composition `0.60 rerank + 0.20 fusion + 0.20 business`;
+- confidence policy for exact/high/ambiguous/low results;
+- retrieval debug output and Phase 1 Trace integration;
+- OpenSearch query/index adapters behind transport interfaces, with no network connection created by this package;
+- full/incremental indexing orchestration with `(update_time, engineering_id)` cursor semantics;
+- `embedding_input_hash` reuse so structure-only changes can preserve existing vectors;
+- source tombstones delete the corresponding OpenSearch document;
+- benchmark metric utilities for Recall@20, Recall@50, Hit@1, MRR, zero-result rate, constraint-conflict rate, and P50/P95 latency.
+
+The runtime does **not** directly add BM25, cosine, or reranker raw scores. Fusion uses ranks through Weighted RRF. Large business IDs remain strings end-to-end.
+
+## Phase 4 integration boundaries
+
+`EngineeringRetrievalService` depends on three ports:
+
+- `EngineeringRetrievalBackend` for Exact/BM25/KNN search;
+- `EngineeringEmbeddingProvider` for the query/document Dense vector;
+- `EngineeringReranker` for normalized cross-encoder scores.
+
+`OpenSearchEngineeringRetrievalBackend` and `OpenSearchEngineeringIndexWriter` accept transport interfaces, so an application can bind an existing OpenSearch client without making this package own connection credentials or network lifecycle.
+
+The checked-in mapping uses Faiss/HNSW with `cosinesimil` and follows the reviewed Phase 4 baseline. Production must pin a compatible OpenSearch version and benchmark any analyzer/model/mapping change before activating a new index version.
 
 ## Database rule
 
-The package still does not connect to MySQL. Phase 3 only generates and statically reviews:
-
-- `003_entity_ontology.sql` and rollback;
-- `004_retrieval.sql` and rollback;
-- `views/engineering_position_source.sql`;
-- `views/boq_source.sql`.
-
-The engineering view maps category/type IDs to Chinese dictionary names and orders numeric chainage with `LEAST/GREATEST`. The BOQ view maps `section_id` to `section_name` and emits normalized identity fields. Both views keep delete state visible for incremental OpenSearch synchronization. Quantity/price/amount fields remain authoritative-source facts and must not become embedding facts.
-
-No migration, DDL, DML, or database connection is executed in Phase 3.
+Phase 4 adds no new MySQL tables. Existing MySQL DDL and Views remain generated/static-review artifacts only. No migration, DDL, DML, MySQL connection, OpenSearch request, embedding-model call, or reranker-model call is executed by repository setup itself.
 
 ## Temporary workspace registration
 

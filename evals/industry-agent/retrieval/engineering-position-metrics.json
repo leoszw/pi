@@ -1,0 +1,4 @@
+{
+  "metrics": ["Recall@20", "Recall@50", "Hit@1", "MRR", "Zero Result Rate", "Constraint Conflict Rate", "P50 latency", "P95 latency"],
+  "threshold_policy": "Thresholds are calibrated and versioned from the Golden Benchmark; production release gates must not be scattered as hard-coded constants in retrieval code."
+}

@@ -5,7 +5,8 @@ export type IndustryAgentErrorCode =
 	| "REPOSITORY_ERROR"
 	| "AGENT_EXECUTION_ERROR"
 	| "TRACE_NOT_FOUND"
-	| "TRACE_ACCESS_DENIED";
+	| "TRACE_ACCESS_DENIED"
+	| "RETRIEVAL_ERROR";
 
 export interface IndustryAgentErrorOptions {
 	cause?: unknown;

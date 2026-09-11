@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "index": {
+      "knn": true,
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "refresh_interval": "30s"
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "engineering_id": {"type": "keyword"},
+      "engineering_code": {"type": "keyword"},
+      "pro_id": {"type": "keyword"},
+      "unit_engineering_id": {"type": "keyword"},
+      "parent_engineering_id": {"type": "keyword"},
+      "ancestor_ids": {"type": "keyword"},
+      "path_names": {"type": "keyword"},
+      "engineering_name": {"type": "text", "analyzer": "cjk", "fields": {"keyword": {"type": "keyword", "ignore_above": 1024}}},
+      "engineering_full_name": {"type": "text", "analyzer": "cjk", "fields": {"keyword": {"type": "keyword", "ignore_above": 2048}}},
+      "unit_engineering_name": {"type": "text", "analyzer": "cjk"},
+      "path_text": {"type": "text", "analyzer": "cjk"},
+      "search_text": {"type": "text", "analyzer": "cjk"},
+      "semantic_name": {"type": "keyword", "index": false, "doc_values": false},
+      "semantic_path": {"type": "keyword", "index": false, "doc_values": false},
+      "engineering_category_name": {"type": "keyword"},
+      "engineering_type_name": {"type": "keyword"},
+      "alignment_code": {"type": "keyword"},
+      "alignment_side": {"type": "keyword"},
+      "local_side": {"type": "keyword"},
+      "position_tokens": {"type": "keyword"},
+      "alias_terms": {"type": "keyword"},
+      "chainage_start_m": {"type": "double"},
+      "chainage_end_m": {"type": "double"},
+      "cross_alignment": {"type": "boolean"},
+      "depth": {"type": "short"},
+      "is_min_unit": {"type": "boolean"},
+      "is_deleted": {"type": "boolean"},
+      "embedding_name_text": {"type": "keyword", "index": false, "doc_values": false},
+      "embedding_context_text": {"type": "keyword", "index": false, "doc_values": false},
+      "rerank_text": {"type": "keyword", "index": false, "doc_values": false},
+      "embedding_version": {"type": "keyword"},
+      "embedding_input_hash": {"type": "keyword"},
+      "index_version": {"type": "keyword"},
+      "name_vector": {
+        "type": "knn_vector",
+        "dimension": 1024,
+        "space_type": "cosinesimil",
+        "method": {"name": "hnsw", "engine": "faiss", "parameters": {"ef_construction": 200, "m": 24}}
+      },
+      "context_vector": {
+        "type": "knn_vector",
+        "dimension": 1024,
+        "space_type": "cosinesimil",
+        "method": {"name": "hnsw", "engine": "faiss", "parameters": {"ef_construction": 200, "m": 24}}
+      }
+    }
+  }
+}

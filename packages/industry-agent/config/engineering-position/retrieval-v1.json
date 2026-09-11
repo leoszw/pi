@@ -1,0 +1,31 @@
+{
+  "version": "engineering-retrieval-v1",
+  "index_name": "engineering_position_v1",
+  "index_version": "v1",
+  "embedding": {
+    "model": "BAAI/bge-m3",
+    "dimension": 1024,
+    "name_max_tokens": 256,
+    "context_max_tokens": 512
+  },
+  "retrieval": {
+    "exact_top_k": 20,
+    "bm25_top_k": 80,
+    "name_vector_top_k": 80,
+    "context_vector_top_k": 80,
+    "fusion_keep_k": 80,
+    "rrf_k": 60,
+    "rerank_k": 50,
+    "final_top_k": 10
+  },
+  "weights": {
+    "CHAINAGE": {"exact": 0.25, "bm25": 0.30, "name": 0.30, "context": 0.15},
+    "ENTITY_SHORT": {"exact": 0.35, "bm25": 0.25, "name": 0.30, "context": 0.10},
+    "CONTEXT": {"exact": 0.15, "bm25": 0.25, "name": 0.20, "context": 0.40},
+    "DEFAULT": {"exact": 0.20, "bm25": 0.30, "name": 0.30, "context": 0.20}
+  },
+  "final_score": {"rerank": 0.60, "fusion": 0.20, "business": 0.20},
+  "confidence": {"auto_accept_score": 0.82, "auto_accept_margin": 0.08, "ambiguous_floor": 0.72},
+  "chainage": {"default_nearby_radius_m": 50},
+  "release_thresholds": "CALIBRATE_FROM_GOLDEN_BENCHMARK"
+}

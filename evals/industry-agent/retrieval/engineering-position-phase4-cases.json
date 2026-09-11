@@ -1,0 +1,12 @@
+[
+  {"id":"chainage-right-line","query":"K12+400 右线仰拱","project_id":"468664890983321600","expected":{"query_mode":"CHAINAGE","alignment_code":"K","alignment_side":"RIGHT_LINE","chainage_contains":12400}},
+  {"id":"alternate-alignment","query":"AK0+500 右线附近仰拱","project_id":"468664890983321600","expected":{"alignment_code":"AK","chainage_range_m":[450,550],"must_not_match_alignment":"K"}},
+  {"id":"local-side-not-width","query":"右侧坡顶截水沟","project_id":"468664890983321600","expected":{"local_side":"RIGHT","alignment_side":"NONE"}},
+  {"id":"left-width-isolation","query":"冯家沟大桥左幅0号台桩基","project_id":"468664890983321600","expected":{"alignment_side":"LEFT_WIDTH","must_not_match_alignment_side":"RIGHT_WIDTH"}},
+  {"id":"position-token","query":"冯家沟大桥右幅0号台盖梁","project_id":"468664890983321600","expected":{"position_token":"0#桥台","or_related_token":true}},
+  {"id":"ambiguous-short-name","query":"涵台基础","project_id":"468664890983321600","expected":{"allow_multiple":true,"auto_accept":false}},
+  {"id":"big-id-roundtrip","query":"盖梁","project_id":"470359026153164800","expected":{"project_id_type":"string"}},
+  {"id":"no-chainage-parent","query":"冯家沟大桥右幅盖梁","project_id":"468664890983321600","expected":{"must_not_require_chainage":true}},
+  {"id":"full-name-not-global-unique","query":"重复全称工程部位","project_id":"468664890983321600","expected":{"direct_exact_only_when_unique_after_scope":true}},
+  {"id":"cross-alignment-guard","query":"GK0+065至FK0+175工程部位","project_id":"468664890983321600","expected":{"cross_alignment_must_not_use_normal_interval":true}}
+]

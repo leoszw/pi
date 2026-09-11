@@ -1,0 +1,7 @@
+[
+  {"id":"intent-boq-001","query":"查询清单编号202-1-a的工程量","expected_intent":"QUERY_BOQ"},
+  {"id":"intent-boq-002","query":"K12+300左幅这一项的单价是多少","expected_intent":"QUERY_BOQ"},
+  {"id":"intent-position-001","query":"查K12+300左幅的工程部位","expected_intent":"QUERY_ENGINEERING_POSITION"},
+  {"id":"intent-position-002","query":"这个桩号附近有哪些构造物","expected_intent":"QUERY_ENGINEERING_POSITION"},
+  {"id":"intent-unknown-001","query":"继续处理刚才的内容","expected_intent":"UNKNOWN"}
+]

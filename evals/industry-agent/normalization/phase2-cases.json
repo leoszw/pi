@@ -1,0 +1,10 @@
+[
+  {"id":"chainage-single","query":"K12+300","expected":{"chainage_m":12300}},
+  {"id":"chainage-range","query":"K12+300 ~ K12+800","expected":{"chainage_range_m":[12300,12800]}},
+  {"id":"side-hard","query":"左幅","expected":{"side":"LEFT","mode":"hard"}},
+  {"id":"side-soft","query":"左边","expected":{"side":"LEFT","mode":"soft"}},
+  {"id":"boq-code","query":"清单编号202－1_a","expected":{"boq_code":"202-1-A"}},
+  {"id":"date-relative","query":"今天","reference_date":"2026-09-11","expected":{"date":"2026-09-11"}},
+  {"id":"invalid-chainage","query":"K12+1200","expected":{"no_chainage_filter":true}},
+  {"id":"large-project-id","query":"查当前项目清单","project_id":"123456789012345678","expected":{"project_id":"123456789012345678","type":"string"}}
+]

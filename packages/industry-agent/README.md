@@ -4,28 +4,32 @@ Industry-specific extension layer built on top of Pi Agent Core.
 
 Phase 0 established request context creation, shared contracts, the Pi Agent gateway, Tool Registry, uniform errors, and repository abstractions.
 
-Phase 1 adds request-scoped observability:
+Phase 1 added request-scoped observability with Pi Telemetry integration, structured LLM/Tool/Retrieval/Error records, token/cost aggregation, redaction, and trace detail/timeline/tree/stats query services.
 
-- one `trace_id` per request;
-- Pi Agent lifecycle spans and turn spans;
-- Pi provider telemetry through `TelemetryContext` injection;
-- structured LLM, Tool, Retrieval, and Error records;
-- token/cost aggregation;
-- configurable field redaction before persistence;
-- stable per-trace sequence numbers for timeline reconstruction;
-- tenant-scoped trace query services for detail, timeline, tree, and stats;
-- passive persistence semantics so trace backend failures do not break Agent execution.
+Phase 2 adds a deterministic semantic layer between natural language and business tools:
 
-The host application maps `TraceQueryService` to these GET routes:
+- `QueryParser` produces a stable `SemanticFrame`;
+- chainage normalization (`K12+300 -> 12300`, range normalization included);
+- side normalization with hard/soft confidence rules;
+- engineering unit normalization;
+- BOQ code normalization;
+- date and relative-date normalization;
+- project/segment context resolution;
+- deictic context references such as “这个 / 那些 / 刚才的”;
+- canonical JSON ordering and hard-filter generation;
+- parse failures fall back to an `UNKNOWN` frame instead of blocking the Agent request;
+- each constraint preserves `confidence`, `source`, and `mode`;
+- only hard constraints are emitted into `filters`.
 
-- `/api/traces/{trace_id}`
-- `/api/traces/{trace_id}/timeline`
-- `/api/traces/{trace_id}/tree`
-- `/api/traces/{trace_id}/stats`
+Request-context `project_id` remains an authoritative hard scope. A conflicting project mentioned in semantic context is kept only as a soft candidate so semantic parsing cannot expand an already-scoped request across projects.
 
-The package still does not connect to MySQL. `TraceRepository` is the persistence boundary and `InMemoryTraceRepository` is the Phase 1 reference/test backend. MySQL DDL remains generated and statically reviewed only; no migration or DDL/DML is executed.
+The Gateway records the generated `SemanticFrame` into the Phase 1 trace and passes it to the runtime factory as an optional third argument. Existing runtime factories that only consume `RequestContext` remain valid.
 
-Entity retrieval, mutation execution, and RAG remain outside Phase 1.
+Entity persistence/search, OpenSearch hybrid retrieval, mutation execution, and RAG remain outside Phase 2.
+
+## Database rule
+
+The package still does not connect to MySQL. Existing SQL files remain generated and statically reviewed only; no migration or DDL/DML is executed in Phase 2.
 
 ## Temporary workspace registration
 

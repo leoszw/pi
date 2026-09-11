@@ -1,0 +1,49 @@
+{
+  "index": "boq_ledger_v1",
+  "minimum_opensearch_version": "2.19",
+  "settings": {
+    "index": {"knn": true, "number_of_shards": 1, "number_of_replicas": 1, "refresh_interval": "30s"}
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "ledger_id": {"type": "keyword"},
+      "pro_id": {"type": "keyword"},
+      "section_id": {"type": "keyword"},
+      "section_name": {"type": "text", "analyzer": "cjk", "fields": {"keyword": {"type": "keyword"}}},
+      "ledger_code_raw": {"type": "keyword"},
+      "ledger_code_norm": {"type": "keyword"},
+      "code_segments": {"type": "keyword"},
+      "parent_code": {"type": "keyword"},
+      "ancestor_codes": {"type": "keyword"},
+      "existing_ancestor_codes": {"type": "keyword"},
+      "missing_ancestor_codes": {"type": "keyword"},
+      "hierarchy_gap": {"type": "boolean"},
+      "depth": {"type": "short"},
+      "has_children": {"type": "boolean"},
+      "is_leaf": {"type": "boolean"},
+      "ledger_name_raw": {"type": "text", "analyzer": "cjk"},
+      "ledger_name_norm": {"type": "text", "analyzer": "cjk", "fields": {"keyword": {"type": "keyword", "ignore_above": 1024}}},
+      "unit_raw": {"type": "keyword", "index": false, "doc_values": false},
+      "unit_norm": {"type": "keyword"},
+      "path_names": {"type": "keyword"},
+      "path_text": {"type": "text", "analyzer": "cjk"},
+      "spec_tokens": {"type": "keyword"},
+      "spec_families": {"type": "keyword"},
+      "alias_terms": {"type": "keyword"},
+      "search_text": {"type": "text", "analyzer": "cjk"},
+      "embedding_item_text": {"type": "keyword", "index": false, "doc_values": false},
+      "embedding_context_text": {"type": "keyword", "index": false, "doc_values": false},
+      "rerank_text": {"type": "keyword", "index": false, "doc_values": false},
+      "embedding_version": {"type": "keyword"},
+      "normalizer_version": {"type": "keyword"},
+      "alias_version": {"type": "keyword"},
+      "spec_pattern_version": {"type": "keyword"},
+      "embedding_input_hash": {"type": "keyword"},
+      "index_version": {"type": "keyword"},
+      "is_deleted": {"type": "boolean"},
+      "item_vector": {"type": "knn_vector", "dimension": 1024, "space_type": "cosinesimil", "method": {"name": "hnsw", "engine": "faiss", "parameters": {"ef_construction": 128, "m": 16}}},
+      "context_vector": {"type": "knn_vector", "dimension": 1024, "space_type": "cosinesimil", "method": {"name": "hnsw", "engine": "faiss", "parameters": {"ef_construction": 128, "m": 16}}}
+    }
+  }
+}

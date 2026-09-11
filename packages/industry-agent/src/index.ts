@@ -12,6 +12,7 @@ export * from "./normalization/date.ts";
 export * from "./normalization/side.ts";
 export * from "./normalization/types.ts";
 export * from "./normalization/unit.ts";
+export * from "./retrieval/boq/index.ts";
 export * from "./retrieval/engineering/index.ts";
 export * from "./semantic/canonical.ts";
 export * from "./semantic/query-parser.ts";

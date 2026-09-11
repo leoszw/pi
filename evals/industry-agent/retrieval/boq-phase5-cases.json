@@ -1,0 +1,14 @@
+[
+  {"id":"code-normalize","query":"403－2a","project_id":"670701177435987968","expected":{"ledger_code":"403-2-a","query_mode":"CODE"}},
+  {"id":"code-fact-lookup","query":"403-2-a 的变更后数量","project_id":"670701177435987968","expected":{"operation":"FACT_LOOKUP","fact_fields":["change_after_num"]}},
+  {"id":"descendants","query":"403-2 下面有哪些","project_id":"670701177435987968","expected":{"operation":"LIST_DESCENDANTS","ancestor_code":"403-2","dense":false}},
+  {"id":"spec-concrete","query":"C30 混凝土","project_id":"670701177435987968","expected":{"query_mode":"SPEC","spec_tokens":["C30"],"critical_conflict":"C35"}},
+  {"id":"spec-rebar-context","query":"桥梁下部结构 HRB400 钢筋","project_id":"670701177435987968","expected":{"query_mode":"SPEC","spec_tokens":["HRB400"],"context_required":true}},
+  {"id":"spec-thickness-percentage","query":"4%水泥稳定碎石底基层厚180mm","project_id":"670701177435987968","expected":{"spec_tokens":["PCT4","T180MM"]}},
+  {"id":"diameter-normalize","query":"ф22 钢筋","project_id":"670701177435987968","expected":{"spec_tokens":["φ22"]}},
+  {"id":"missing-parent","ledger_code":"203-1-a-1","expected":{"hierarchy_gap":true,"must_not_invent_parent_name":true}},
+  {"id":"ambiguous-name","query":"钢筋","project_id":"670701177435987968","expected":{"allow_multiple":true,"auto_accept":false}},
+  {"id":"fact-isolation","query":"C30 混凝土合同金额","project_id":"670701177435987968","expected":{"operation":"FACT_LOOKUP","retrieval_must_not_answer_fact":true}},
+  {"id":"big-id-roundtrip","query":"钢筋网","project_id":"670701177435987968","expected":{"project_id_type":"string"}},
+  {"id":"delete-sync","is_deleted":true,"ledger_id":"670701177435987968","expected":{"opensearch_action":"DELETE"}}
+]

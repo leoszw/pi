@@ -1,0 +1,6 @@
+{
+  "metrics": ["Code Exact Accuracy", "Hierarchy Accuracy", "Recall@10", "Hit@1", "MRR", "Spec Conflict Top1 Rate", "Ambiguity Precision", "Zero Result Rate", "P50 latency", "P95 latency"],
+  "benchmark_minimum": 500,
+  "provisional_targets_from_reviewed_design": {"code_exact_accuracy": 1.0, "hierarchy_accuracy": 1.0, "recall_at_10": 0.98},
+  "release_gate_policy": "Run and calibrate the 500+ Golden Benchmark before converting provisional targets into a versioned release gate. Ranking and confidence thresholds are calibrated separately."
+}

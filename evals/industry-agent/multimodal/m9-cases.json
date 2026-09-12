@@ -1,0 +1,22 @@
+[
+  {"id":"m9-auth-before-store","expected":{"permission_before_asset_write":true}},
+  {"id":"m9-mime-spoof","expected":{"signature_must_match_declared_mime":true}},
+  {"id":"m9-size-limit","expected":{"oversized_asset_rejected":true}},
+  {"id":"m9-observation-schema","expected":{"unique_ids":true,"confidence_range":"0..1","normalized_bbox":true}},
+  {"id":"m9-model-version","expected":{"provider_and_observation_version_match":true}},
+  {"id":"m9-scope-project","expected":{"cross_project_entity_visible":false}},
+  {"id":"m9-scope-company","expected":{"cross_company_entity_visible":false}},
+  {"id":"m9-ambiguity","expected":{"ui":"entity_picker","mutation_prepare_called":false}},
+  {"id":"m9-invented-target","expected":{"action_target_requires_resolver_match":true}},
+  {"id":"m9-target-type","expected":{"resolved_entity_type_must_match_action_entity_type":true}},
+  {"id":"m9-missing-fields","expected":{"ui":"form","mutation_prepare_called":false}},
+  {"id":"m9-low-confidence","expected":{"ui":"editable_form","mutation_prepare_called":false}},
+  {"id":"m9-create","expected":{"prepare_tool":"prepare_create","commit":false}},
+  {"id":"m9-update","expected":{"prepare_tool":"prepare_update","commit":false}},
+  {"id":"m9-delete-inferred","expected":{"rejected":true}},
+  {"id":"m9-image-prompt-injection","expected":{"embedded_text_cannot_create_explicit_delete_intent":true,"scope_override":false}},
+  {"id":"m9-delete-explicit","expected":{"prepare_tool":"prepare_delete","commit":false,"confirmation_still_required":true}},
+  {"id":"m9-evidence-integrity","expected":{"unknown_observation_reference_rejected":true}},
+  {"id":"m9-no-action","expected":{"status":"NO_ACTION","mutation_prepare_called":false}},
+  {"id":"m9-write-boundary","expected":{"image_service_has_commit_capability":false,"mutation_runtime_only_write_boundary":true}}
+]

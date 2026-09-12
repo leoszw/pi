@@ -2,52 +2,54 @@
 
 Industry-specific extension layer built on top of Pi Agent Core.
 
-Phases 0–10 established request/trace observability, deterministic semantic normalization, canonical entity retrieval, server-scoped READ Tools, confirmation-bound mutation, scoped RAG ingestion/QA, and bounded Working Memory.
+Phases 0–11 established the first-stage platform: request/trace observability, deterministic semantic normalization, entity retrieval, server-scoped READ Tools, confirmation-bound Mutation Runtime, scoped RAG ingestion/QA, bounded Working Memory, and Golden/Hard Eval release gates.
 
-Phase 11 adds the first-stage Golden Eval / Hard Cases / release gate. It does **not** fabricate a passing benchmark result; it provides the corpus, metric harness, offline runner contract, regression diff, and fail-closed promotion policy required to produce and judge a real benchmark.
+## M9 image input
 
-- `buildPhase11GoldenCorpus()` deterministically materializes 1,030 concrete contract-level Golden/Hard cases: a balanced 54-case base for each of the 19 required categories plus four critical first-stage E2E workflows;
-- the committed manifest records corpus version, generator version, case/category counts, and canonical SHA-256; the release gate recomputes it so corpus changes cannot hide under the same version;
-- required coverage includes same-name entities, aliases/short names, typos, chainage ranges, left/right semantics, project conflicts, BOQ section/code cases, context references, reserved image cases, RAG scope/ACL, company/project/industry conflicts, insufficient evidence, wrong mutation targets, batch mutation, Tool failure, LLM timeout, zero retrieval, and Hard Negatives;
-- `runOfflineBenchmark()` executes every corpus case through an application-provided `OfflineEvalExecutor`, requires the returned observation ID to match the input case ID, preserves corpus order, and supports bounded concurrency;
-- `computeBenchmarkReport()` calculates Intent Candidate Recall@K / Macro F1, Mention Span F1, Normalization Exact Match, Entity Recall@20/50 / Hit@1 / MRR, RAG Recall@K / nDCG / MRR / Groundedness / Citation Accuracy, Tool Selection Accuracy, Mutation Wrong-target Rate, Approval Consistency, Trace Span Completeness, Token Accounting Completeness, End-to-End Task Success, Clarification Rate, and Manual Steps Saved;
-- retrieval nDCG deduplicates repeated chunk IDs so a faulty backend cannot inflate ranking quality by returning the same relevant chunk multiple times;
-- `evaluateReleaseGate()` requires corpus size/category coverage, 100% candidate benchmark case coverage, no unknown/duplicate observation IDs, configured minimum samples for every gated metric, absolute metric thresholds, and regression tolerances;
-- the four critical first-stage E2E workflows (query, context mutation, project RAG QA, authoritative quantity lookup) must each have an explicit successful E2E observation; aggregate success rate cannot hide a failure in one of them;
-- COMPARE mode additionally requires the baseline and candidate to use the same corpus version and both benchmark reports to cover the gated corpus;
-- Prompt, Normalizer, Embedding, Index, RRF, Reranker, and Tool Schema are represented by `{version, fingerprint}`. A fingerprint change without a version bump blocks promotion;
-- a correctly bumped component still cannot promote unless its offline benchmark passes absolute thresholds and regression diff;
-- Mutation Wrong-target Rate is zero-tolerance and Approval Consistency requires 100% in the v1 release policy;
-- Trace/Token/E2E metrics require broad sample coverage rather than being accepted from a handful of cases;
-- Clarification Rate is reported with broad sample coverage but v1 deliberately does not treat “lower is always better” as a regression direction, avoiding pressure to skip necessary clarification.
+M9 adds the second-stage raster-image input boundary only. Complex autonomous Agent Loop, report generation, and read-only SQL/Python Sandbox remain later work.
 
-## Phase 11 release workflow
+The safe pipeline is:
 
 ```text
-component change
- -> version bump
- -> run exact corpus version offline
- -> produce BenchmarkReport + component manifest
- -> regression diff against accepted baseline
- -> evaluate release gate
- -> PASS before promotion
+Image
+ -> permission
+ -> signature/file validation
+ -> tenant-scoped Asset Storage
+ -> Multimodal Understanding
+ -> validated Observation JSON
+ -> scoped Entity Resolution
+ -> Action Proposal
+ -> Missing Fields / Entity Review UI when required
+ -> existing Mutation Prepare
+ -> existing Diff / Confirmation / Approval / Commit
 ```
 
-`packages/industry-agent/config/eval/release-gate-v1.json` is the reviewable first baseline for corpus coverage, per-metric minimum samples, absolute thresholds, and allowed regression. Thresholds are centralized and versioned rather than scattered through runtime code.
+Key rules:
 
-## Benchmark integrity boundary
+- `ImageInputService` never owns database write capability and exposes no approval or commit method;
+- permission `multimodal.process` is checked before object storage or model processing;
+- v1 accepts only signature-verified JPEG/PNG/WebP and rejects MIME spoofing and oversized inputs;
+- binary storage keys are tenant-scoped by SHA-256 checksum (`multimodal/{tenant}/{checksum}`);
+- the multimodal provider may emit observations only; observation IDs, confidence, page/bounding-box shape, and provider/model version are validated before use;
+- entity IDs used for UPDATE/DELETE must come from the server-side `ImageEntityResolver`, must match the exact request tenant/company/project scope, and must have image-observation evidence;
+- ambiguous entity matches return `entity_picker` UI and do not invoke mutation prepare;
+- the action proposer cannot override request scope, cannot invent UPDATE/DELETE targets, and every proposed mutation must cite at least one validated observation;
+- action entity type must match the resolved target entity type;
+- server-side `ImageActionPolicy` controls allowed operations, allowed/required fields, confidence threshold, and maximum target count;
+- missing required fields return a `form` UI, while low-confidence complete proposals return `editable_form`; neither path invokes mutation prepare;
+- DELETE can never be inferred from image content alone; it requires an explicit user-requested DELETE operation and still only reaches `prepare_delete`;
+- complete CREATE/UPDATE/explicit-DELETE actions are converted by `MutationToolImagePreparer` to the existing `prepare_create`, `prepare_update`, or `prepare_delete` Tool at version `1.0.0`;
+- the existing Mutation Runtime remains the only path to Diff, trusted UI confirmation, Approval Token, `commit_mutation`, verification, audit, and database writes.
 
-The committed corpus contains inputs and expected invariants only. It is **not** evidence that the current runtime already meets the release thresholds. Establishing an accepted baseline requires a real offline executor to run the system under test and emit observations for the exact corpus. Subsequent component changes must run COMPARE mode against an accepted report from the same corpus version.
+`config/multimodal/image-input-v1.json` versions the first M9 MIME/size/pipeline/security policy. `evals/industry-agent/multimodal/m9-cases.json` covers authorization-before-storage, MIME spoofing, scope leakage, ambiguity, invented targets, missing fields, low confidence, explicit delete, evidence integrity, no-action behavior, and the no-direct-commit boundary.
 
-The Phase 11 harness is infrastructure-neutral. It creates no MySQL, OpenSearch, object-storage, embedding, reranker, or LLM connection itself. An application-provided offline executor may use mocks or a controlled evaluation environment; production credentials and database writes do not belong in the harness.
+## Phase 11 release gate
+
+The first-stage release-gate harness remains available under `src/eval`. It deterministically materializes the 1,030-case `phase11-golden-v1` corpus and requires real offline observations before a baseline or component promotion can pass. The committed corpus/thresholds are not fabricated evidence that the current runtime already meets production release targets.
 
 ## Database rule
 
-Phase 11 adds no MySQL schema and executes no existing migration, DDL, or DML. The existing Phase 0–10 database artifacts remain unchanged.
-
-## Phase boundary
-
-Phase 11 completes the first-stage evaluation/release-gate layer. Image understanding, complex autonomous Agent loops, report generation, and read-only SQL/Python Sandbox remain second-stage capabilities and are not implemented here.
+M9 adds no MySQL schema and executes no existing migration, DDL, or DML. It creates no real object-storage or multimodal-model connection by itself; those are application-provided ports. Business writes remain isolated to the existing Mutation Runtime after explicit user confirmation.
 
 ## Temporary workspace registration
 

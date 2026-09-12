@@ -1,0 +1,16 @@
+{
+  "version": "image-input-v1",
+  "allowed_mime_types": ["image/jpeg", "image/png", "image/webp"],
+  "max_file_size_bytes": 20971520,
+  "permissions": ["multimodal.process", "mutation.prepare"],
+  "pipeline": ["authorize", "validate_signature", "asset_storage", "multimodal_understanding", "observation_json", "scoped_entity_resolution", "action_proposal", "missing_fields_ui", "mutation_prepare"],
+  "security": {
+    "scope_source": "server_request_context",
+    "update_delete_targets_must_be_resolved": true,
+    "delete_requires_explicit_user_request": true,
+    "missing_or_ambiguous_fields_block_prepare": true,
+    "low_confidence_blocks_prepare": true,
+    "direct_commit_from_image_pipeline": false,
+    "approval_and_commit_runtime": "existing_mutation_runtime"
+  }
+}

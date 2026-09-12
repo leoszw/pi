@@ -8,6 +8,7 @@ export * from "./errors/industry-agent-error.ts";
 export * from "./eval/index.ts";
 export * from "./gateway/agent-gateway.ts";
 export * from "./memory/index.ts";
+export * from "./multimodal/image-input/index.ts";
 export * from "./mutation/index.ts";
 export * from "./normalization/boq-code.ts";
 export * from "./normalization/chainage.ts";

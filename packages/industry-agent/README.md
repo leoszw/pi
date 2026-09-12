@@ -2,53 +2,78 @@
 
 Industry-specific extension layer built on top of Pi Agent Core.
 
-Phases 0–11 established the first-stage platform: request/trace observability, deterministic semantic normalization, entity retrieval, server-scoped READ Tools, confirmation-bound Mutation Runtime, scoped RAG ingestion/QA, bounded Working Memory, and Golden/Hard Eval release gates. M9 added the safe raster-image input boundary.
+Phases 0–11 established the first-stage platform. M9 added safe image input and M10 added the bounded `Plan -> Act -> Verify -> Replan` orchestration loop.
 
-## M10 complex Agent Loop
+## M11 Report
 
-M10 adds a bounded orchestration layer for multi-step tasks:
+M11 adds a safe report-generation boundary for:
 
 ```text
-Plan -> Act -> Verify -> Replan
+Excel
+PDF
+Charts
+Narrative Report
 ```
 
-The loop is intentionally an orchestrator, not a new authority boundary. It receives the authenticated `RequestContext`, a versioned Tool catalog, a metered Tool executor, a Planner, and a Verifier. It never receives database credentials and it does not own a business-data write path.
+The Report layer consumes an **already authorized application snapshot**. It has no database query port and no business-data write capability.
+
+The pipeline is:
+
+```text
+Authorized Result Snapshot
+ -> report.generate permission
+ -> exact tenant/company/project scope validation
+ -> Dataset / Chart / Narrative schema validation
+ -> evidence / citation lineage validation
+ -> versioned format Renderer
+ -> artifact safety validation
+ -> checksum + lineage metadata
+ -> report_preview UI action
+```
 
 Key rules:
 
-- every run has hard limits for steps, Tool calls, total tokens, cost, total duration, and per-operation duration;
-- Planner, Verifier, and model-backed Tools must report token/cost usage; incomplete Tool accounting terminates as `USAGE_ACCOUNTING_INCOMPLETE` rather than pretending the budget is still trustworthy;
-- model calls are not started when their Token or cost budget has already been exhausted; post-call overshoot terminates before any later action;
-- every Planner/Verifier/Tool operation receives an `AbortSignal` and is bounded by the smaller of the remaining run duration, configured operation timeout, and Tool timeout;
-- there is no automatic Tool retry. A normal metered `ok=false` ToolResult may be inspected by the Verifier and explicitly replanned, while an executor exception fails closed because usage accounting may be incomplete;
-- Tool invocations always receive the server-authenticated `RequestContext`; Planner output cannot replace it;
-- for Tools whose `dataScopeRule` declares `SERVER_REQUEST_CONTEXT`, top-level user/tenant/company/project args are rejected if they conflict with the server scope and stripped even when they match;
-- Tool outputs are marked `UNTRUSTED_DATA`; result data and replan feedback are bounded before they are fed back into later model context;
-- `requiresConfirmation=true` and all `CRITICAL` Tools are blocked inside the autonomous loop;
-- CREATE/UPDATE/DELETE Tools are additionally blocked unless they are explicitly dry-run/prepare operations (`supportsDryRun=true`), so a misconfigured direct-write Tool cannot become autonomous merely by lowering its risk flag;
-- the existing `prepare_create`, `prepare_update`, and `prepare_delete` path can participate in planning because it only creates a proposal/diff;
-- `commit_mutation` cannot execute inside M10. The Loop terminates with `CONFIRMATION_REQUIRED`, and trusted UI confirmation + Approval Token + Mutation Runtime remain the only commit path;
-- planner/verifier decisions are runtime-validated and malformed model output fails closed;
-- Trace hooks cover loop start, Plan, Act, Verify, Replan, and every termination, without dumping raw Tool output into trace events;
-- `ToolRegistryAgentLoopCatalog` adapts the existing versioned `ToolRegistry` directly into the M10 catalog contract.
+- `report.generate` authorization runs before validation/rendering;
+- Dataset and Evidence scope must exactly match the authenticated `RequestContext` tenant/company/project;
+- every Dataset, Chart, and Narrative section must cite registered evidence;
+- authoritative Tool evidence retains `sourceId/sourceVersion`; RAG evidence must retain `documentId/chunkId/page/section/sourceVersion`;
+- derived evidence must name its parents, parent IDs must exist, and lineage cycles are rejected;
+- Dataset rows may contain only declared columns. Undeclared fields are rejected so hidden business data cannot silently leak into exports;
+- cell values are primitive typed values, and runtime validation enforces STRING/NUMBER/BOOLEAN/DATE/DATETIME column contracts;
+- Chart specs reference a declared Dataset; numeric series must use NUMBER columns, and chart evidence must come from that Dataset;
+- Narrative sections are evidence-bound and raw HTML is rejected;
+- artifact evidence is computed by the server from the validated model. A Renderer must report exactly the expected `embeddedEvidenceIds`; it cannot substitute another lineage set;
+- the renderer safety contract forbids formulas, external links, remote resources, executable content, raw HTML, and treating Tool/data text as trusted instructions;
+- XLSX must have an OOXML ZIP signature and obvious macro/external-link parts are rejected; PDF must have a PDF signature and common JavaScript/Launch/URI actions are rejected; PNG/SVG signatures are checked and SVG active/external content is rejected;
+- custom artifact file names cannot contain path separators/control characters and must match the renderer extension;
+- per-artifact size, total artifact size, Dataset/row/column/chart/section counts, cell size, and renderer timeout are bounded;
+- render operations receive `AbortSignal` and timeout failures are surfaced as `REPORT_RENDER_FAILED`;
+- Trace covers AUTHORIZE, VALIDATE, per-format RENDER, and COMPLETE while never logging raw report bytes;
+- `report_preview` contains only artifact metadata/checksums/lineage, not raw file content.
 
-`config/agent-loop/loop-v1.json` versions the first limits/safety policy. `evals/industry-agent/agent-loop/m10-cases.json` contains 24 M10 Golden/Hard cases covering success, replanning, every budget/timeout boundary, Tool failures, scope injection, confirmation, mutation dry-run boundaries, untrusted Tool output, usage accounting, Trace, and phase boundaries.
+`config/report/report-v1.json` versions the M11 format, limit, and renderer safety contract. `evals/industry-agent/report/m11-cases.json` contains M11 Golden/Hard cases covering all four formats, scope/lineage, RAG citation preservation, hidden-field leakage, active file content, size/timeout, Trace, preview, and phase boundaries.
+
+Excel/PDF/Chart/Narrative encoding is exposed through the versioned `ReportRenderer` port so the application can use its approved renderer engine. M11 tests use deterministic renderer adapters and do not claim real Microsoft Excel/Adobe PDF interoperability testing.
+
+## M10 Agent Loop
+
+The M10 Agent Loop remains available under `src/agent-loop`. It enforces bounded steps/Tools/tokens/cost/time, server-owned scope, untrusted Tool output, complete usage accounting, and exits to trusted UI for confirmation-required operations. It still cannot execute `commit_mutation` autonomously.
 
 ## M9 image input
 
-The M9 image pipeline remains available under `src/multimodal/image-input`. It validates image signatures, produces Observation JSON, resolves entities in server scope, and can reach only the existing Mutation **prepare** tools; confirmation and commit remain outside the image pipeline.
+The M9 image pipeline remains available under `src/multimodal/image-input`; it can reach only existing Mutation **prepare** operations, never approval or commit.
 
 ## Phase 11 release gate
 
-The first-stage release-gate harness remains available under `src/eval`. It materializes the 1,030-case `phase11-golden-v1` corpus and requires real offline observations before a baseline or component promotion can pass. The committed corpus/thresholds are not evidence that the runtime already meets production release targets.
+The first-stage release-gate harness remains under `src/eval`. The committed Golden corpus and thresholds are not evidence that production runtime benchmarks already pass; real offline observations are still required.
 
 ## Database rule
 
-M10 adds no MySQL schema and executes no existing migration, DDL, or DML. The Agent Loop itself creates no MySQL, object-storage, OpenSearch, embedding, reranker, or LLM network connection; these capabilities remain application-provided ports. Business writes remain isolated to the existing Mutation Runtime after explicit user confirmation.
+M11 adds no MySQL schema and executes no migration, DDL, or DML. It does not connect to MySQL, OpenSearch, object storage, or a rendering service by itself. Report generation uses application-provided Renderer ports over already-authorized data snapshots.
 
 ## Phase boundary
 
-M10 implements only the bounded complex Agent Loop. M11 Report and M12 read-only SQL/Python Sandbox are not implemented here.
+M11 implements Report only. M12 read-only SQL/Python Sandbox is not implemented here.
 
 ## Temporary workspace registration
 

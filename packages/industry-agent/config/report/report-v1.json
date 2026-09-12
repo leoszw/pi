@@ -1,0 +1,37 @@
+{
+  "version": "report-v1",
+  "formats": [
+    "EXCEL",
+    "PDF",
+    "CHART",
+    "NARRATIVE"
+  ],
+  "permission": "report.generate",
+  "limits": {
+    "max_formats": 4,
+    "max_datasets": 10,
+    "max_rows_per_dataset": 10000,
+    "max_columns_per_dataset": 100,
+    "max_charts": 20,
+    "max_narrative_sections": 50,
+    "max_cell_chars": 10000,
+    "max_artifact_bytes": 52428800,
+    "max_total_artifact_bytes": 104857600,
+    "render_timeout_ms": 30000
+  },
+  "security": {
+    "data_source": "already_authorized_application_snapshot",
+    "scope_source": "server_request_context",
+    "formula_output_allowed": false,
+    "external_links_allowed": false,
+    "remote_resources_allowed": false,
+    "executable_content_allowed": false,
+    "raw_html_allowed": false,
+    "undeclared_dataset_fields_allowed": false,
+    "rag_narrative_requires_citation": true,
+    "report_layer_database_access": false,
+    "business_write_capability": false,
+    "renderer_must_embed_expected_evidence": true
+  },
+  "renderer_contract_version": "report-renderer-v1"
+}

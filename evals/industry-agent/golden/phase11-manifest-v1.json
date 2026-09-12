@@ -1,0 +1,27 @@
+{
+  "version": "phase11-golden-v1",
+  "generatorVersion": "phase11-contract-generator-v1",
+  "caseCount": 1030,
+  "canonicalSha256": "3750ffb931517fd52a9477ce497933304b6333d4bf09935bb5bc3d1164a100c7",
+  "categories": {
+    "SAME_NAME_ENTITY": 54,
+    "ALIAS_SHORT_NAME": 54,
+    "TYPO": 54,
+    "CHAINAGE_RANGE": 55,
+    "SIDE": 54,
+    "PROJECT_CONFLICT": 54,
+    "SECTION_NAME": 54,
+    "BOQ_CODE": 55,
+    "CONTEXT_REFERENCE": 54,
+    "IMAGE_RESERVED": 54,
+    "RAG_SCOPE_ACL": 55,
+    "KNOWLEDGE_SCOPE_CONFLICT": 54,
+    "INSUFFICIENT_EVIDENCE": 54,
+    "WRONG_MUTATION_TARGET": 54,
+    "BATCH_MUTATION": 55,
+    "TOOL_FAILURE": 54,
+    "LLM_TIMEOUT": 54,
+    "ZERO_RETRIEVAL": 54,
+    "HARD_NEGATIVE": 54
+  }
+}

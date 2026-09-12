@@ -5,6 +5,7 @@ export * from "./data-access/in-memory-repository.ts";
 export * from "./data-access/repository.ts";
 export * from "./entity/index.ts";
 export * from "./errors/industry-agent-error.ts";
+export * from "./eval/index.ts";
 export * from "./gateway/agent-gateway.ts";
 export * from "./memory/index.ts";
 export * from "./mutation/index.ts";

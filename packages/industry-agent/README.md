@@ -2,35 +2,52 @@
 
 Industry-specific extension layer built on top of Pi Agent Core.
 
-Phases 0–3 established request/trace contracts, deterministic semantic normalization, canonical entity scope/hierarchy, and static MySQL retrieval metadata. Phase 4 added engineering-position Hybrid Retrieval. Phase 5 added BOQ Hybrid Retrieval. Phase 6 added server-scoped READ Tools. Phase 7 added the confirmation-bound Mutation Runtime and UI Action safety boundary. Phase 8 added scoped RAG ingestion. Phase 9 added ACL-prefiltered RAG QA with evidence-only citations.
+Phases 0–10 established request/trace observability, deterministic semantic normalization, canonical entity retrieval, server-scoped READ Tools, confirmation-bound mutation, scoped RAG ingestion/QA, and bounded Working Memory.
 
-Phase 10 adds bounded Working Memory for task continuity. It is deliberately **not** open-ended long-term personality memory.
+Phase 11 adds the first-stage Golden Eval / Hard Cases / release gate. It does **not** fabricate a passing benchmark result; it provides the corpus, metric harness, offline runner contract, regression diff, and fail-closed promotion policy required to produce and judge a real benchmark.
 
-- `WorkingMemoryService` persists only structured task state: resolved entity IDs, last result set, active filters, active project, selected rows, and recent Tool results;
-- every persisted slot records its source (`USER_EXPLICIT`, `TOOL_RESULT`, `SERVER_CONTEXT`, or deterministic `SYSTEM_DERIVED`), source trace/request, project scope, and capture time;
-- `LLM_INFERENCE` is rejected at the persistence boundary with `MEMORY_SOURCE_NOT_PERSISTABLE`; an unconfirmed model guess cannot become remembered fact;
-- state is scoped by tenant + authenticated user + company + conversation; project-bound slots additionally carry their capture project;
-- an explicit `RequestContext.projectId` is authoritative and memory cannot override it; project switches hide and then clear old project-bound result/filter/selection/Tool state;
-- server-bound project context is automatically remembered as the active project, so a later request in the same conversation can omit project and still resolve task-local references safely;
-- the deterministic reference resolver supports `刚才那些`, `这些`, `第二个`, `只看未完成的`, `继续`, and `把这些导出来`;
-- `这些` prefers explicitly selected rows, while `刚才那些` refers to the previous result set; ordinal references are one-based over the previous result set;
-- `只看未完成的` returns an explicit semantic `UNFINISHED` filter but does not silently persist it; downstream business tooling remains responsible for mapping that semantic status to authoritative domain statuses;
-- `继续` resumes from the newest project-matching Tool result/continuation token, without pretending generic result refs are entity IDs;
-- selected rows must belong to the current result set, large result sets are bounded, duplicate row/entity IDs are collapsed, recent Tool results are bounded, and the whole snapshot has a configured size limit;
-- snapshots have a default 24-hour TTL. Expired state is treated as empty task context while preserving repository revision semantics for a safe next write;
-- optimistic repository revisions prevent concurrent writers from silently overwriting each other;
-- `mergeWorkingMemorySemanticContext()` bridges resolved task-local entities/project into the existing `SemanticContext` without modifying Pi Agent Core or changing the Agent Gateway runtime contract;
-- Trace hooks cover load/save/resolve/expiry/scope filtering so memory behavior remains inspectable by request and conversation.
+- `buildPhase11GoldenCorpus()` deterministically materializes 1,030 concrete contract-level Golden/Hard cases: a balanced 54-case base for each of the 19 required categories plus four critical first-stage E2E workflows;
+- the committed manifest records corpus version, generator version, case/category counts, and canonical SHA-256; the release gate recomputes it so corpus changes cannot hide under the same version;
+- required coverage includes same-name entities, aliases/short names, typos, chainage ranges, left/right semantics, project conflicts, BOQ section/code cases, context references, reserved image cases, RAG scope/ACL, company/project/industry conflicts, insufficient evidence, wrong mutation targets, batch mutation, Tool failure, LLM timeout, zero retrieval, and Hard Negatives;
+- `runOfflineBenchmark()` executes every corpus case through an application-provided `OfflineEvalExecutor`, requires the returned observation ID to match the input case ID, preserves corpus order, and supports bounded concurrency;
+- `computeBenchmarkReport()` calculates Intent Candidate Recall@K / Macro F1, Mention Span F1, Normalization Exact Match, Entity Recall@20/50 / Hit@1 / MRR, RAG Recall@K / nDCG / MRR / Groundedness / Citation Accuracy, Tool Selection Accuracy, Mutation Wrong-target Rate, Approval Consistency, Trace Span Completeness, Token Accounting Completeness, End-to-End Task Success, Clarification Rate, and Manual Steps Saved;
+- retrieval nDCG deduplicates repeated chunk IDs so a faulty backend cannot inflate ranking quality by returning the same relevant chunk multiple times;
+- `evaluateReleaseGate()` requires corpus size/category coverage, 100% candidate benchmark case coverage, no unknown/duplicate observation IDs, configured minimum samples for every gated metric, absolute metric thresholds, and regression tolerances;
+- the four critical first-stage E2E workflows (query, context mutation, project RAG QA, authoritative quantity lookup) must each have an explicit successful E2E observation; aggregate success rate cannot hide a failure in one of them;
+- COMPARE mode additionally requires the baseline and candidate to use the same corpus version and both benchmark reports to cover the gated corpus;
+- Prompt, Normalizer, Embedding, Index, RRF, Reranker, and Tool Schema are represented by `{version, fingerprint}`. A fingerprint change without a version bump blocks promotion;
+- a correctly bumped component still cannot promote unless its offline benchmark passes absolute thresholds and regression diff;
+- Mutation Wrong-target Rate is zero-tolerance and Approval Consistency requires 100% in the v1 release policy;
+- Trace/Token/E2E metrics require broad sample coverage rather than being accepted from a handful of cases;
+- Clarification Rate is reported with broad sample coverage but v1 deliberately does not treat “lower is always better” as a regression direction, avoiding pressure to skip necessary clarification.
 
-## Phase 10 persistence boundary
+## Phase 11 release workflow
 
-Phase 10 reuses the Phase 0 `conversation`, `memory_item`, and `memory_link` schema from `db/mysql/migrations/002_conversation_memory.sql`; it adds no new migration. `toWorkingMemorySnapshotRecord()` maps a state snapshot to `memory_type = WORKING_MEMORY_V1`, `content_json`, `source_trace_id`, and `valid_until`.
+```text
+component change
+ -> version bump
+ -> run exact corpus version offline
+ -> produce BenchmarkReport + component manifest
+ -> regression diff against accepted baseline
+ -> evaluate release gate
+ -> PASS before promotion
+```
 
-A production MySQL adapter should store/retrieve these snapshots through the `WorkingMemoryRepository` port. This phase does not create a MySQL connection and does not execute `002_conversation_memory.sql`, DDL, or DML. Tests use only the in-memory repository.
+`packages/industry-agent/config/eval/release-gate-v1.json` is the reviewable first baseline for corpus coverage, per-metric minimum samples, absolute thresholds, and allowed regression. Thresholds are centralized and versioned rather than scattered through runtime code.
+
+## Benchmark integrity boundary
+
+The committed corpus contains inputs and expected invariants only. It is **not** evidence that the current runtime already meets the release thresholds. Establishing an accepted baseline requires a real offline executor to run the system under test and emit observations for the exact corpus. Subsequent component changes must run COMPARE mode against an accepted report from the same corpus version.
+
+The Phase 11 harness is infrastructure-neutral. It creates no MySQL, OpenSearch, object-storage, embedding, reranker, or LLM connection itself. An application-provided offline executor may use mocks or a controlled evaluation environment; production credentials and database writes do not belong in the harness.
+
+## Database rule
+
+Phase 11 adds no MySQL schema and executes no existing migration, DDL, or DML. The existing Phase 0–10 database artifacts remain unchanged.
 
 ## Phase boundary
 
-Working Memory is conversation/task continuity only. Phase 10 does not persist open-ended user personality, preferences, inferred biography, or other autonomous long-term facts. It also does not implement Phase 11 release gates beyond adding Phase 10 eval cases alongside the implementation.
+Phase 11 completes the first-stage evaluation/release-gate layer. Image understanding, complex autonomous Agent loops, report generation, and read-only SQL/Python Sandbox remain second-stage capabilities and are not implemented here.
 
 ## Temporary workspace registration
 

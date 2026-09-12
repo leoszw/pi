@@ -1,0 +1,20 @@
+{
+  "version": "working-memory-v1",
+  "memory_type": "WORKING_MEMORY_V1",
+  "ttl_ms": 86400000,
+  "limits": {
+    "max_resolved_entities": 100,
+    "max_result_rows": 200,
+    "max_selected_rows": 200,
+    "max_recent_tool_results": 10,
+    "max_snapshot_chars": 250000
+  },
+  "reference_resolver": {
+    "version": "memory-reference-v1",
+    "supported": ["刚才那些", "这些", "第二个", "只看未完成的", "继续", "把这些导出来"]
+  },
+  "persistence_policy": {
+    "allowed_sources": ["USER_EXPLICIT", "TOOL_RESULT", "SERVER_CONTEXT", "SYSTEM_DERIVED"],
+    "rejected_sources": ["LLM_INFERENCE"]
+  }
+}

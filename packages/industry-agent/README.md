@@ -2,46 +2,35 @@
 
 Industry-specific extension layer built on top of Pi Agent Core.
 
-Phases 0–3 established request/trace contracts, deterministic semantic normalization, canonical entity scope/hierarchy, and static MySQL retrieval metadata. Phase 4 added engineering-position Hybrid Retrieval. Phase 5 added BOQ Hybrid Retrieval. Phase 6 added server-scoped READ Tools. Phase 7 added the confirmation-bound Mutation Runtime and UI Action safety boundary. Phase 8 added scoped RAG ingestion with structure-aware chunking and staged indexes.
+Phases 0–3 established request/trace contracts, deterministic semantic normalization, canonical entity scope/hierarchy, and static MySQL retrieval metadata. Phase 4 added engineering-position Hybrid Retrieval. Phase 5 added BOQ Hybrid Retrieval. Phase 6 added server-scoped READ Tools. Phase 7 added the confirmation-bound Mutation Runtime and UI Action safety boundary. Phase 8 added scoped RAG ingestion. Phase 9 added ACL-prefiltered RAG QA with evidence-only citations.
 
-Phase 9 adds RAG QA only; persistent Working Memory remains Phase 10.
+Phase 10 adds bounded Working Memory for task continuity. It is deliberately **not** open-ended long-term personality memory.
 
-- `RagQaService` implements Context Resolve -> Query Rewrite -> server Access/Scope Resolve -> ACL/visibility/metadata filter -> BM25 + Dense + optional Entity-aware retrieval -> Weighted RRF -> rerank -> diversity/dedup -> parent-context expansion -> Citation Pack -> evidence gate -> answer;
-- `RagQaAccessContextProvider` is the only source for roles, security tags, industry/department context, while authenticated user/tenant/company/project are cross-checked against `RequestContext`;
-- every retrieval backend method requires a `RagQaAccessFilter`; there is deliberately no unfiltered BM25/Dense/entity method;
-- visibility, explicit USER/ROLE ACL, security tags, READY status, and metadata restrictions are therefore applied before retrieval, not hidden by a prompt after retrieval;
-- the service defensively re-checks every returned candidate with the same ACL policy and fails closed if a backend violates the pre-filter contract;
-- metadata filters permit only document IDs, MIME types, entity IDs, and section prefix; tenant/company/project/ACL override keys are rejected;
-- Dense embedding failure does not suppress an available lexical/entity path; individual retrieval arms can degrade independently, while failure of all arms is fatal;
-- BM25/Dense/Entity ranks are fused with versioned Weighted RRF instead of directly adding incompatible raw scores;
-- reranker failure degrades to RRF ranking and is exposed in debug/trace rather than silently changing semantics;
-- diversity removes duplicate content hashes and caps selected evidence per document;
-- parent expansion uses the same ACL-filtered source reader as primary retrieval, and parent evidence receives its own citation rather than being smuggled into a child citation;
-- Citation Pack preserves document ID, chunk ID, page range, section path, document checksum as source version, and parser/chunker/embedding/lexical/vector versions;
-- the answer generator receives only the evidence pack plus an explicit `EVIDENCE_ONLY` grounding contract and allowed citation IDs;
-- when the configured evidence gate is not met, the service returns `INSUFFICIENT_EVIDENCE` with the configured explicit message and does not call the answer generator;
-- the built-in in-memory corpus applies the same ACL policy and supports deterministic tests without OpenSearch, a vector database, or an LLM.
+- `WorkingMemoryService` persists only structured task state: resolved entity IDs, last result set, active filters, active project, selected rows, and recent Tool results;
+- every persisted slot records its source (`USER_EXPLICIT`, `TOOL_RESULT`, `SERVER_CONTEXT`, or deterministic `SYSTEM_DERIVED`), source trace/request, project scope, and capture time;
+- `LLM_INFERENCE` is rejected at the persistence boundary with `MEMORY_SOURCE_NOT_PERSISTABLE`; an unconfirmed model guess cannot become remembered fact;
+- state is scoped by tenant + authenticated user + company + conversation; project-bound slots additionally carry their capture project;
+- an explicit `RequestContext.projectId` is authoritative and memory cannot override it; project switches hide and then clear old project-bound result/filter/selection/Tool state;
+- server-bound project context is automatically remembered as the active project, so a later request in the same conversation can omit project and still resolve task-local references safely;
+- the deterministic reference resolver supports `刚才那些`, `这些`, `第二个`, `只看未完成的`, `继续`, and `把这些导出来`;
+- `这些` prefers explicitly selected rows, while `刚才那些` refers to the previous result set; ordinal references are one-based over the previous result set;
+- `只看未完成的` returns an explicit semantic `UNFINISHED` filter but does not silently persist it; downstream business tooling remains responsible for mapping that semantic status to authoritative domain statuses;
+- `继续` resumes from the newest project-matching Tool result/continuation token, without pretending generic result refs are entity IDs;
+- selected rows must belong to the current result set, large result sets are bounded, duplicate row/entity IDs are collapsed, recent Tool results are bounded, and the whole snapshot has a configured size limit;
+- snapshots have a default 24-hour TTL. Expired state is treated as empty task context while preserving repository revision semantics for a safe next write;
+- optimistic repository revisions prevent concurrent writers from silently overwriting each other;
+- `mergeWorkingMemorySemanticContext()` bridges resolved task-local entities/project into the existing `SemanticContext` without modifying Pi Agent Core or changing the Agent Gateway runtime contract;
+- Trace hooks cover load/save/resolve/expiry/scope filtering so memory behavior remains inspectable by request and conversation.
 
-## Phase 9 authorization policy
+## Phase 10 persistence boundary
 
-The default `rag-acl-v1` behavior is deliberately conservative:
+Phase 10 reuses the Phase 0 `conversation`, `memory_item`, and `memory_link` schema from `db/mysql/migrations/002_conversation_memory.sql`; it adds no new migration. `toWorkingMemorySnapshotRecord()` maps a state snapshot to `memory_type = WORKING_MEMORY_V1`, `content_json`, `source_trace_id`, and `valid_until`.
 
-- tenant must always match;
-- a non-owner document/chunk with `departmentId` requires the same server-resolved department;
-- `PRIVATE` is owner-only;
-- `PROJECT`, `COMPANY`, and `INDUSTRY` require the matching server-resolved scope;
-- `TENANT` permits the authenticated tenant scope;
-- if USER/ROLE ACL entries exist, a non-owner must match at least one allowed user or role;
-- every document/chunk security tag must be present in the server-resolved principal security tags;
-- documents must be `READY` before they are retrievable.
+A production MySQL adapter should store/retrieve these snapshots through the `WorkingMemoryRepository` port. This phase does not create a MySQL connection and does not execute `002_conversation_memory.sql`, DDL, or DML. Tests use only the in-memory repository.
 
-Production search adapters must translate the complete `RagQaAccessFilter` to native OpenSearch/vector-database filters before executing BM25/KNN/entity queries. Post-retrieval filtering alone is not an acceptable adapter implementation.
+## Phase boundary
 
-## Phase 9 retrieval configuration
-
-`config/rag/qa-v1.json` versions the first baseline for arm TopK, Weighted RRF, rerank/final limits, parent expansion, evidence gate, and required citation fields. These values are a reviewable baseline for Golden Eval calibration rather than hidden constants distributed through application code.
-
-Phase 9 adds no MySQL schema and executes no existing SQL. It consumes only READY Phase 8 document/chunk/index contracts through application ports. No MySQL connection, object-storage request, OpenSearch request, vector-database request, embedding-model request, reranker-model request, or answer-model request is created by repository setup or the Phase 9 tests.
+Working Memory is conversation/task continuity only. Phase 10 does not persist open-ended user personality, preferences, inferred biography, or other autonomous long-term facts. It also does not implement Phase 11 release gates beyond adding Phase 10 eval cases alongside the implementation.
 
 ## Temporary workspace registration
 

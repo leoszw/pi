@@ -1,0 +1,16 @@
+[
+  {"id":"current-set","utterance":"这些","expected":{"kind":"CURRENT_SET","uses_selected_rows_first":true}},
+  {"id":"previous-set","utterance":"刚才那些","expected":{"kind":"CURRENT_SET","conversation_scoped":true}},
+  {"id":"ordinal","utterance":"第二个","expected":{"kind":"ORDINAL","one_based_index":2}},
+  {"id":"unfinished","utterance":"只看未完成的","expected":{"kind":"APPLY_FILTER","semantic_filter":"UNFINISHED","not_auto_persisted":true}},
+  {"id":"continue","utterance":"继续","expected":{"kind":"CONTINUE","uses_recent_tool_result":true}},
+  {"id":"export","utterance":"把这些导出来","expected":{"kind":"EXPORT_CURRENT","uses_current_rows":true}},
+  {"id":"project-switch","expected":{"old_project_rows_visible":false,"current_request_project_authoritative":true}},
+  {"id":"source-policy","expected":{"llm_inference_persisted":false,"error":"MEMORY_SOURCE_NOT_PERSISTABLE"}},
+  {"id":"selection-membership","expected":{"selected_row_must_belong_to_current_result":true}},
+  {"id":"bounded-memory","expected":{"result_rows_max":200,"recent_tool_results_max":10}},
+  {"id":"ttl","expected":{"expired_snapshot_loaded":false,"default_ttl_hours":24}},
+  {"id":"optimistic-write","expected":{"revision_conflict":"MEMORY_VERSION_CONFLICT"}},
+  {"id":"existing-schema","expected":{"migration":"002_conversation_memory.sql","new_sql":false,"memory_type":"WORKING_MEMORY_V1"}},
+  {"id":"phase-boundary","expected":{"long_term_personality_memory":false,"autonomous_fact_inference":false}}
+]

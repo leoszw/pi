@@ -137,8 +137,9 @@ export class MutationRuntime implements MutationToolRuntime {
 			throw error;
 		}
 		await this.audit(proposal,"COMMIT_STARTED",context); this.options.trace?.recordMutation("commit_started", { operationId, digest:proposal.digest, recordVersion:proposal.recordVersion });
+		let verified: MutableBusinessRecord[];
 		try {
-			const verified = await this.options.writeGateway.transaction(async (session) => {
+			verified = await this.options.writeGateway.transaction(async (session) => {
 				if (!(await session.consumeApproval(payload.nonce,operationId,now))) throw new IndustryAgentError("MUTATION_APPROVAL_REPLAYED","Approval token was already consumed or is no longer valid");
 				if (proposal.operation !== "CREATE") {
 					for (const target of proposal.targets) {
@@ -162,14 +163,36 @@ export class MutationRuntime implements MutationToolRuntime {
 				}
 				return reread;
 			});
-			const committedAt = this.now().toISOString();
-			await this.options.proposals.update({ ...proposal,status:"COMMITTED",committedAt,resultEntityIds:verified.map((record) => record.entityId) });
-			await this.audit(proposal,"COMMITTED",context,{ entityIds: verified.map((record) => record.entityId), verified:true }); this.options.trace?.recordMutation("committed", { operationId, entityIds:verified.map((record) => record.entityId), verified:true });
-			return { operationId,status:"COMMITTED",records:verified,verified:true };
 		} catch (error) {
-			await this.options.proposals.update({ ...proposal,status:"FAILED" });
-			await this.audit(proposal,"FAILED",context,{ code:error instanceof IndustryAgentError ? error.code : "REPOSITORY_ERROR", message:error instanceof Error ? error.message : String(error) }); this.options.trace?.recordMutation("commit_failed", { operationId, code:error instanceof IndustryAgentError ? error.code : "REPOSITORY_ERROR" }); throw error;
+			const code = error instanceof IndustryAgentError ? error.code : "REPOSITORY_ERROR";
+			if (code !== "MUTATION_APPROVAL_REPLAYED") {
+				try { await this.options.proposals.update({ ...proposal,status:"FAILED" }); }
+				catch (finalizationError) { this.options.trace?.recordMutation("failure_status_persist_failed", { operationId, message: finalizationError instanceof Error ? finalizationError.message : String(finalizationError) }); }
+				try { await this.audit(proposal,"FAILED",context,{ code, message:error instanceof Error ? error.message : String(error) }); }
+				catch (auditError) { this.options.trace?.recordMutation("failure_audit_persist_failed", { operationId, message: auditError instanceof Error ? auditError.message : String(auditError) }); }
+			} else {
+				try { await this.audit(proposal,"REJECTED",context,{ code, message:error instanceof Error ? error.message : String(error), reconciliationRequired:true }); }
+				catch (auditError) { this.options.trace?.recordMutation("replay_audit_persist_failed", { operationId, message: auditError instanceof Error ? auditError.message : String(auditError) }); }
+			}
+			this.options.trace?.recordMutation("commit_failed", { operationId, code });
+			throw error;
 		}
+
+		const entityIds = verified.map((record) => record.entityId);
+		const committedAt = this.now().toISOString();
+		try {
+			await this.audit(proposal,"COMMITTED",context,{ entityIds, verified:true });
+			await this.options.proposals.update({ ...proposal,status:"COMMITTED",committedAt,resultEntityIds:entityIds });
+		} catch (error) {
+			this.options.trace?.recordMutation("commit_finalization_failed", { operationId, entityIds, verified:true, message:error instanceof Error ? error.message : String(error) });
+			throw new IndustryAgentError(
+				"MUTATION_COMMIT_FINALIZATION_FAILED",
+				"Business mutation was committed and verified, but audit/proposal finalization failed. Do not retry automatically; reconcile the operation state first.",
+				{ cause:error, details:{ operationId, businessWriteCommitted:true, verified:true, entityIds } },
+			);
+		}
+		this.options.trace?.recordMutation("committed", { operationId, entityIds, verified:true });
+		return { operationId,status:"COMMITTED",records:verified,verified:true };
 	}
 
 	private patchForTarget(target: MutationTargetProposal): JsonObject {

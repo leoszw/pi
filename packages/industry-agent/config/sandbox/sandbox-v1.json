@@ -1,0 +1,57 @@
+{
+  "version": "sandbox-v1",
+  "permissions": ["sandbox.analyze", "sandbox.schema.read", "sandbox.data.read"],
+  "limits": {
+    "max_tool_handoff_actions": 4,
+    "max_queries": 8,
+    "max_sql_chars": 10000,
+    "max_python_chars": 20000,
+    "max_broker_calls": 8,
+    "max_rows_per_query": 5000,
+    "max_total_broker_rows": 20000,
+    "max_cell_chars": 10000,
+    "max_broker_result_chars": 5000000,
+    "max_total_broker_chars": 10000000,
+    "max_broker_execution_ms": 10000,
+    "max_output_tables": 10,
+    "max_output_rows": 10000,
+    "max_output_chars": 5000000,
+    "max_total_tokens": 50000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 120000,
+    "max_operation_ms": 15000,
+    "max_sandbox_cpu_ms": 10000,
+    "max_sandbox_memory_bytes": 268435456
+  },
+  "sql_policy": {
+    "statements": ["SELECT", "WITH_SELECT"],
+    "require_limit": true,
+    "allow_wildcard_select": false,
+    "allow_comments": false,
+    "allow_multiple_statements": false,
+    "allow_system_schemas": false,
+    "allow_file_functions": false
+  },
+  "python_policy": {
+    "entrypoint": "main(read)",
+    "imports": false,
+    "filesystem": false,
+    "network": false,
+    "process_spawn": false,
+    "dynamic_code": false,
+    "data_access_mode": "QUERY_ID_ONLY"
+  },
+  "broker_policy": {
+    "server_request_scope": true,
+    "read_only_revalidation": true,
+    "schema_allowlist": true,
+    "statement_timeout": true,
+    "query_cost_guard": true,
+    "credentials_exposed_to_sandbox": false
+  },
+  "mutation_policy": {
+    "direct_write": false,
+    "prepare_only": true,
+    "explicit_user_confirmation_required": true
+  }
+}

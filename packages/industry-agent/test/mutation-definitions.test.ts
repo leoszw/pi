@@ -1,0 +1,3 @@
+import { describe, expect, it } from "vitest";
+import { MUTATION_TOOL_DEFINITIONS } from "../src/mutation/definitions.ts";
+describe("mutation tool definitions",()=>{it("requires confirmation only at commit and never allows scope overrides in schemas",()=>{expect(MUTATION_TOOL_DEFINITIONS.map((d)=>d.name)).toEqual(["prepare_create","prepare_update","prepare_delete","commit_mutation"]);for(const d of MUTATION_TOOL_DEFINITIONS){expect(d.inputSchema.additionalProperties).toBe(false);expect(d.riskLevel==="HIGH"||d.riskLevel==="CRITICAL").toBe(true);}expect(MUTATION_TOOL_DEFINITIONS.find((d)=>d.name==="commit_mutation")?.requiresConfirmation).toBe(true);});});

@@ -1,0 +1,14 @@
+[
+  {"id":"commit-without-approval","expected":{"error":"MUTATION_APPROVAL_REQUIRED","business_write":false}},
+  {"id":"scope-binding","expected":{"token_binds":["tenant","user","company","project"],"scope_override_rejected":true}},
+  {"id":"digest-binding","expected":{"changed_proposal_rejected":"MUTATION_DIGEST_MISMATCH"}},
+  {"id":"optimistic-lock","expected":{"changed_record_version_rejected":"MUTATION_VERSION_CONFLICT"}},
+  {"id":"one-time-token","expected":{"second_successful_use_rejected":"MUTATION_APPROVAL_REPLAYED"}},
+  {"id":"token-expiry","expected":{"expired_token_rejected":"MUTATION_APPROVAL_EXPIRED"}},
+  {"id":"soft-delete","expected":{"delete_mode":"SOFT","physical_delete":false}},
+  {"id":"batch-diff","expected":{"affected_count_required":true,"representative_samples_max":5,"batch_version_digest":true}},
+  {"id":"post-write-verify","expected":{"transactional_write_after_read":true,"verification_failure_rolls_back":true}},
+  {"id":"audit-sequence","expected":{"events":["PREPARED","APPROVED","COMMIT_STARTED","COMMITTED"]}},
+  {"id":"ui-approval-boundary","expected":{"approve_not_registered_as_agent_tool":true}},
+  {"id":"no-real-db","expected":{"sql_static_only":true,"ddl_dml_executed":false}}
+]

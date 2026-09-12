@@ -14,6 +14,7 @@ export * from "./normalization/side.ts";
 export * from "./normalization/types.ts";
 export * from "./normalization/unit.ts";
 export * from "./rag/ingestion/index.ts";
+export * from "./rag/qa/index.ts";
 export * from "./retrieval/boq/index.ts";
 export * from "./retrieval/engineering/index.ts";
 export * from "./semantic/canonical.ts";

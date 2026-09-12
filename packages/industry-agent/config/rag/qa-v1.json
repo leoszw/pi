@@ -1,0 +1,18 @@
+{
+  "version": "rag-qa-v1",
+  "acl_policy_version": "rag-acl-v1",
+  "retrieval": {
+    "bm25_top_k": 80,
+    "dense_top_k": 80,
+    "entity_top_k": 40,
+    "fusion_keep_k": 80,
+    "rrf_k": 60,
+    "arm_weights": {"BM25": 0.35, "DENSE": 0.50, "ENTITY": 0.15},
+    "rerank_k": 50,
+    "final_k": 8,
+    "max_per_document": 3
+  },
+  "context": {"parent_expansion_chars": 1200},
+  "evidence_gate": {"min_top_rerank_score": 0.35, "min_evidence_count": 1, "insufficient_evidence_text": "证据不足，当前知识库中没有足够的可引用内容支持确定回答。"},
+  "citation": {"required_fields": ["document_id", "chunk_id", "page", "section", "source_version"]}
+}

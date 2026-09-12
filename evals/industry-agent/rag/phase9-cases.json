@@ -1,0 +1,17 @@
+[
+  {"id":"acl-prefilter","expected":{"acl_before_retrieval":true,"post_filter_only":false}},
+  {"id":"visibility-private","expected":{"owner_only_without_explicit_acl":true}},
+  {"id":"security-tags","expected":{"all_required_tags_before_retrieval":true}},
+  {"id":"department-scope","expected":{"department_id_pre_filter":true}},
+  {"id":"scope-injection","expected":{"metadata_scope_override_rejected":"RAG_QA_INVALID_REQUEST"}},
+  {"id":"hybrid","expected":{"arms":["BM25","DENSE"],"optional_entity":true,"fusion":"weighted_rrf"}},
+  {"id":"active-arm-fallback","expected":{"single_arm_can_answer":true,"all_arms_failed":"RAG_QA_RETRIEVAL_FAILED"}},
+  {"id":"rerank-fallback","expected":{"fallback":"RRF","degraded":true}},
+  {"id":"diversity","expected":{"content_hash_dedup":true,"max_per_document":3}},
+  {"id":"parent-expansion","expected":{"parent_read_uses_same_acl_filter":true}},
+  {"id":"citation","expected":{"fields":["document_id","chunk_id","page","section","source_version"]}},
+  {"id":"insufficient-evidence","expected":{"answer_generator_called":false,"explicit_status":"INSUFFICIENT_EVIDENCE"}},
+  {"id":"ready-only","expected":{"failed_or_staging_documents_retrievable":false}},
+  {"id":"trace","expected":{"stages":["CONTEXT","REWRITE","ACCESS_FILTER","RETRIEVAL","RRF","RERANK","DIVERSITY","PARENT_EXPANSION","CITATION","ANSWER"]}},
+  {"id":"phase-boundary","expected":{"working_memory_persistence":false}}
+]

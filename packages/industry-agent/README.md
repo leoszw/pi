@@ -2,54 +2,53 @@
 
 Industry-specific extension layer built on top of Pi Agent Core.
 
-Phases 0–11 established the first-stage platform: request/trace observability, deterministic semantic normalization, entity retrieval, server-scoped READ Tools, confirmation-bound Mutation Runtime, scoped RAG ingestion/QA, bounded Working Memory, and Golden/Hard Eval release gates.
+Phases 0–11 established the first-stage platform: request/trace observability, deterministic semantic normalization, entity retrieval, server-scoped READ Tools, confirmation-bound Mutation Runtime, scoped RAG ingestion/QA, bounded Working Memory, and Golden/Hard Eval release gates. M9 added the safe raster-image input boundary.
 
-## M9 image input
+## M10 complex Agent Loop
 
-M9 adds the second-stage raster-image input boundary only. Complex autonomous Agent Loop, report generation, and read-only SQL/Python Sandbox remain later work.
-
-The safe pipeline is:
+M10 adds a bounded orchestration layer for multi-step tasks:
 
 ```text
-Image
- -> permission
- -> signature/file validation
- -> tenant-scoped Asset Storage
- -> Multimodal Understanding
- -> validated Observation JSON
- -> scoped Entity Resolution
- -> Action Proposal
- -> Missing Fields / Entity Review UI when required
- -> existing Mutation Prepare
- -> existing Diff / Confirmation / Approval / Commit
+Plan -> Act -> Verify -> Replan
 ```
+
+The loop is intentionally an orchestrator, not a new authority boundary. It receives the authenticated `RequestContext`, a versioned Tool catalog, a metered Tool executor, a Planner, and a Verifier. It never receives database credentials and it does not own a business-data write path.
 
 Key rules:
 
-- `ImageInputService` never owns database write capability and exposes no approval or commit method;
-- permission `multimodal.process` is checked before object storage or model processing;
-- v1 accepts only signature-verified JPEG/PNG/WebP and rejects MIME spoofing and oversized inputs;
-- binary storage keys are tenant-scoped by SHA-256 checksum (`multimodal/{tenant}/{checksum}`);
-- the multimodal provider may emit observations only; observation IDs, confidence, page/bounding-box shape, and provider/model version are validated before use;
-- entity IDs used for UPDATE/DELETE must come from the server-side `ImageEntityResolver`, must match the exact request tenant/company/project scope, and must have image-observation evidence;
-- ambiguous entity matches return `entity_picker` UI and do not invoke mutation prepare;
-- the action proposer cannot override request scope, cannot invent UPDATE/DELETE targets, and every proposed mutation must cite at least one validated observation;
-- action entity type must match the resolved target entity type;
-- server-side `ImageActionPolicy` controls allowed operations, allowed/required fields, confidence threshold, and maximum target count;
-- missing required fields return a `form` UI, while low-confidence complete proposals return `editable_form`; neither path invokes mutation prepare;
-- DELETE can never be inferred from image content alone; it requires an explicit user-requested DELETE operation and still only reaches `prepare_delete`;
-- complete CREATE/UPDATE/explicit-DELETE actions are converted by `MutationToolImagePreparer` to the existing `prepare_create`, `prepare_update`, or `prepare_delete` Tool at version `1.0.0`;
-- the existing Mutation Runtime remains the only path to Diff, trusted UI confirmation, Approval Token, `commit_mutation`, verification, audit, and database writes.
+- every run has hard limits for steps, Tool calls, total tokens, cost, total duration, and per-operation duration;
+- Planner, Verifier, and model-backed Tools must report token/cost usage; incomplete Tool accounting terminates as `USAGE_ACCOUNTING_INCOMPLETE` rather than pretending the budget is still trustworthy;
+- model calls are not started when their Token or cost budget has already been exhausted; post-call overshoot terminates before any later action;
+- every Planner/Verifier/Tool operation receives an `AbortSignal` and is bounded by the smaller of the remaining run duration, configured operation timeout, and Tool timeout;
+- there is no automatic Tool retry. A normal metered `ok=false` ToolResult may be inspected by the Verifier and explicitly replanned, while an executor exception fails closed because usage accounting may be incomplete;
+- Tool invocations always receive the server-authenticated `RequestContext`; Planner output cannot replace it;
+- for Tools whose `dataScopeRule` declares `SERVER_REQUEST_CONTEXT`, top-level user/tenant/company/project args are rejected if they conflict with the server scope and stripped even when they match;
+- Tool outputs are marked `UNTRUSTED_DATA`; result data and replan feedback are bounded before they are fed back into later model context;
+- `requiresConfirmation=true` and all `CRITICAL` Tools are blocked inside the autonomous loop;
+- CREATE/UPDATE/DELETE Tools are additionally blocked unless they are explicitly dry-run/prepare operations (`supportsDryRun=true`), so a misconfigured direct-write Tool cannot become autonomous merely by lowering its risk flag;
+- the existing `prepare_create`, `prepare_update`, and `prepare_delete` path can participate in planning because it only creates a proposal/diff;
+- `commit_mutation` cannot execute inside M10. The Loop terminates with `CONFIRMATION_REQUIRED`, and trusted UI confirmation + Approval Token + Mutation Runtime remain the only commit path;
+- planner/verifier decisions are runtime-validated and malformed model output fails closed;
+- Trace hooks cover loop start, Plan, Act, Verify, Replan, and every termination, without dumping raw Tool output into trace events;
+- `ToolRegistryAgentLoopCatalog` adapts the existing versioned `ToolRegistry` directly into the M10 catalog contract.
 
-`config/multimodal/image-input-v1.json` versions the first M9 MIME/size/pipeline/security policy. `evals/industry-agent/multimodal/m9-cases.json` covers authorization-before-storage, MIME spoofing, scope leakage, ambiguity, invented targets, missing fields, low confidence, explicit delete, evidence integrity, no-action behavior, and the no-direct-commit boundary.
+`config/agent-loop/loop-v1.json` versions the first limits/safety policy. `evals/industry-agent/agent-loop/m10-cases.json` contains 24 M10 Golden/Hard cases covering success, replanning, every budget/timeout boundary, Tool failures, scope injection, confirmation, mutation dry-run boundaries, untrusted Tool output, usage accounting, Trace, and phase boundaries.
+
+## M9 image input
+
+The M9 image pipeline remains available under `src/multimodal/image-input`. It validates image signatures, produces Observation JSON, resolves entities in server scope, and can reach only the existing Mutation **prepare** tools; confirmation and commit remain outside the image pipeline.
 
 ## Phase 11 release gate
 
-The first-stage release-gate harness remains available under `src/eval`. It deterministically materializes the 1,030-case `phase11-golden-v1` corpus and requires real offline observations before a baseline or component promotion can pass. The committed corpus/thresholds are not fabricated evidence that the current runtime already meets production release targets.
+The first-stage release-gate harness remains available under `src/eval`. It materializes the 1,030-case `phase11-golden-v1` corpus and requires real offline observations before a baseline or component promotion can pass. The committed corpus/thresholds are not evidence that the runtime already meets production release targets.
 
 ## Database rule
 
-M9 adds no MySQL schema and executes no existing migration, DDL, or DML. It creates no real object-storage or multimodal-model connection by itself; those are application-provided ports. Business writes remain isolated to the existing Mutation Runtime after explicit user confirmation.
+M10 adds no MySQL schema and executes no existing migration, DDL, or DML. The Agent Loop itself creates no MySQL, object-storage, OpenSearch, embedding, reranker, or LLM network connection; these capabilities remain application-provided ports. Business writes remain isolated to the existing Mutation Runtime after explicit user confirmation.
+
+## Phase boundary
+
+M10 implements only the bounded complex Agent Loop. M11 Report and M12 read-only SQL/Python Sandbox are not implemented here.
 
 ## Temporary workspace registration
 

@@ -1,3 +1,4 @@
+export * from "./agent-loop/index.ts";
 export * from "./context/request-context.ts";
 export * from "./context/semantic-context.ts";
 export * from "./contracts/index.ts";

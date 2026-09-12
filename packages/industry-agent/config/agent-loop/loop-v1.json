@@ -1,0 +1,21 @@
+{
+  "version": "agent-loop-v1",
+  "limits": {
+    "max_steps": 12,
+    "max_tool_calls": 8,
+    "max_total_tokens": 50000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 120000,
+    "max_operation_ms": 15000,
+    "max_history_item_chars": 20000
+  },
+  "safety": {
+    "scope_source": "server_request_context",
+    "tool_outputs": "untrusted_data",
+    "confirmation_required_tools": "block_in_loop",
+    "critical_tools": "block_in_loop",
+    "mutating_tools_require_dry_run": true,
+    "automatic_tool_retry": false,
+    "planner_scope_args": "strip_and_reject_mismatch"
+  }
+}

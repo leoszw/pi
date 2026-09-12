@@ -1,0 +1,16 @@
+[
+  {"id":"scope-complete","expected":{"document_and_chunk_scope":["tenant_id","industry_id","company_id","project_id","department_id","owner_user_id","visibility","acl_users","acl_roles","security_tags"]}},
+  {"id":"scope-conflict","expected":{"cross_project_upload_rejected":"RAG_SCOPE_INVALID"}},
+  {"id":"permission-before-storage","expected":{"permission":"knowledge.ingest","denied_before_object_storage":true}},
+  {"id":"checksum-dedup","expected":{"checksum":"sha256","same_security_scope_reuses_ready_document":true}},
+  {"id":"checksum-cross-acl","expected":{"different_acl_does_not_reuse_index":true}},
+  {"id":"parser-routing","expected":{"mime_routed_parser":true,"parser_version_recorded":true}},
+  {"id":"vision-routing","expected":{"vision_only_when_parser_requests":true,"vision_version_recorded":true}},
+  {"id":"table-chunk","expected":{"table_kept_whole":true}},
+  {"id":"long-section-window","expected":{"fixed_500_1000_split":false,"window_only_for_long_structural_block":true}},
+  {"id":"chunk-context","expected":{"parent_child":true,"section_path":true,"page_range":true}},
+  {"id":"version-traceability","expected":{"versions":["parser","chunker","embedding","lexical_index","vector_index"]}},
+  {"id":"failed-ingestion","expected":{"status":"FAILED","failure_stage_code_message":true}},
+  {"id":"quality-gate","expected":{"index_mode":"staging","failed_content_active":false,"ready_after_quality":true}},
+  {"id":"sql-static-only","expected":{"migration":"006_rag.sql","ddl_executed":false}}
+]

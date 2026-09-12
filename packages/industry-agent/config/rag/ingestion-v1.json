@@ -1,0 +1,27 @@
+{
+  "version": "rag-ingestion-v1",
+  "max_file_size_bytes": 52428800,
+  "allowed_mime_types": [
+    "application/pdf",
+    "text/plain",
+    "text/markdown",
+    "text/html",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ],
+  "dedup": {
+    "checksum": "sha256",
+    "binary_storage_scope": "tenant+checksum",
+    "index_reuse_scope": "exact_security_scope_fingerprint"
+  },
+  "chunking": {
+    "policy": "structure_first",
+    "priority": ["title_hierarchy", "clause", "table", "paragraph", "page", "business_object"],
+    "long_section_max_tokens": 384,
+    "long_section_overlap_tokens": 48,
+    "table_split": false,
+    "preserve_parent_child": true,
+    "preserve_section_path": true,
+    "preserve_page_range": true
+  },
+  "index_activation": "stage_then_quality_validate_then_activate"
+}

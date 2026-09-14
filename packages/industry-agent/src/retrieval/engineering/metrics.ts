@@ -44,7 +44,13 @@ export function computeEngineeringBenchmarkMetrics(
 		mrr: observations.reduce((sum, item) => sum + reciprocalRank(item), 0) / count,
 		zeroResultRate: ratio(observations.filter((item) => item.rankedEngineeringIds.length === 0).length),
 		constraintConflictRate: ratio(observations.filter((item) => item.constraintConflict).length),
-		p50LatencyMs: percentile(observations.map((item) => item.latencyMs), 0.5),
-		p95LatencyMs: percentile(observations.map((item) => item.latencyMs), 0.95),
+		p50LatencyMs: percentile(
+			observations.map((item) => item.latencyMs),
+			0.5,
+		),
+		p95LatencyMs: percentile(
+			observations.map((item) => item.latencyMs),
+			0.95,
+		),
 	};
 }

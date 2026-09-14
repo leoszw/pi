@@ -40,7 +40,13 @@ export function resolveSemanticContext(
 	const refs = new Set<string>();
 
 	if (requestContext.projectId) {
-		constraints.push({ field: "project_id", value: requestContext.projectId, confidence: 1, source: "context", mode: "hard" });
+		constraints.push({
+			field: "project_id",
+			value: requestContext.projectId,
+			confidence: 1,
+			source: "context",
+			mode: "hard",
+		});
 	}
 
 	if (semanticContext?.project) {
@@ -48,9 +54,21 @@ export function resolveSemanticContext(
 		if (mention) {
 			mentions.push(mention);
 			if (!requestContext.projectId) {
-				constraints.push({ field: "project_id", value: semanticContext.project.id, confidence: 0.99, source: "user", mode: "hard" });
+				constraints.push({
+					field: "project_id",
+					value: semanticContext.project.id,
+					confidence: 0.99,
+					source: "user",
+					mode: "hard",
+				});
 			} else if (requestContext.projectId !== semanticContext.project.id) {
-				constraints.push({ field: "project_candidate_id", value: semanticContext.project.id, confidence: 0.9, source: "user", mode: "soft" });
+				constraints.push({
+					field: "project_candidate_id",
+					value: semanticContext.project.id,
+					confidence: 0.9,
+					source: "user",
+					mode: "soft",
+				});
 			}
 		}
 	}
@@ -59,16 +77,34 @@ export function resolveSemanticContext(
 		const mention = exactMention(text, semanticContext.segment, "SEGMENT");
 		if (mention) {
 			mentions.push(mention);
-			constraints.push({ field: "segment_id", value: semanticContext.segment.id, confidence: 0.98, source: "user", mode: "hard" });
+			constraints.push({
+				field: "segment_id",
+				value: semanticContext.segment.id,
+				confidence: 0.98,
+				source: "user",
+				mode: "hard",
+			});
 		} else {
-			constraints.push({ field: "segment_id", value: semanticContext.segment.id, confidence: 0.78, source: "context", mode: "soft" });
+			constraints.push({
+				field: "segment_id",
+				value: semanticContext.segment.id,
+				confidence: 0.78,
+				source: "context",
+				mode: "soft",
+			});
 		}
 	}
 
 	if (DEICTIC_PATTERN.test(text)) {
 		for (const id of semanticContext?.recentEntityIds ?? []) refs.add(id);
 		if (refs.size > 0) {
-			constraints.push({ field: "context_entity_ids", value: Array.from(refs).sort(), confidence: 0.75, source: "context", mode: "soft" });
+			constraints.push({
+				field: "context_entity_ids",
+				value: Array.from(refs).sort(),
+				confidence: 0.75,
+				source: "context",
+				mode: "soft",
+			});
 		}
 	}
 

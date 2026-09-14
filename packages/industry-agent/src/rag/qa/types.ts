@@ -51,7 +51,12 @@ export type RagQaRetrievalArm = "BM25" | "DENSE" | "ENTITY";
 export interface RagQaRetrievalBackend {
 	bm25(query: string, filter: RagQaAccessFilter, topK: number): Promise<readonly RagQaSearchCandidate[]>;
 	dense(vector: readonly number[], filter: RagQaAccessFilter, topK: number): Promise<readonly RagQaSearchCandidate[]>;
-	entityAware?(query: string, entityIds: readonly string[], filter: RagQaAccessFilter, topK: number): Promise<readonly RagQaSearchCandidate[]>;
+	entityAware?(
+		query: string,
+		entityIds: readonly string[],
+		filter: RagQaAccessFilter,
+		topK: number,
+	): Promise<readonly RagQaSearchCandidate[]>;
 }
 
 export interface RagQaAccessContextProvider {
@@ -145,7 +150,15 @@ export interface RagQaAnswerGenerator {
 export interface RagQaDebug {
 	context: RagQaResolvedContext;
 	rewrittenQuery: string;
-	accessSummary: { tenantId: string; companyId: string | null; projectId: string | null; industryId: string | null; departmentId: string | null; aclPolicyVersion: string; metadataFilter: RagQaMetadataFilter };
+	accessSummary: {
+		tenantId: string;
+		companyId: string | null;
+		projectId: string | null;
+		industryId: string | null;
+		departmentId: string | null;
+		aclPolicyVersion: string;
+		metadataFilter: RagQaMetadataFilter;
+	};
 	armCounts: Readonly<Partial<Record<RagQaRetrievalArm, number>>>;
 	fusedCount: number;
 	rerankedCount: number;
@@ -163,12 +176,24 @@ export interface RagQaResult {
 export interface RagQaTraceEvent {
 	traceId: string;
 	requestId: string;
-	stage: "CONTEXT" | "REWRITE" | "ACCESS_FILTER" | "RETRIEVAL" | "RRF" | "RERANK" | "DIVERSITY" | "PARENT_EXPANSION" | "CITATION" | "ANSWER";
+	stage:
+		| "CONTEXT"
+		| "REWRITE"
+		| "ACCESS_FILTER"
+		| "RETRIEVAL"
+		| "RRF"
+		| "RERANK"
+		| "DIVERSITY"
+		| "PARENT_EXPANSION"
+		| "CITATION"
+		| "ANSWER";
 	status: "OK" | "DEGRADED" | "ERROR";
 	details?: JsonObject;
 }
 
-export interface RagQaTraceSink { record(event: RagQaTraceEvent): void; }
+export interface RagQaTraceSink {
+	record(event: RagQaTraceEvent): void;
+}
 
 export interface RagQaConfig {
 	version: string;

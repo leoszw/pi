@@ -9,7 +9,15 @@ export function weightedRrf(
 	const active = (Object.keys(arms) as RagQaRetrievalArm[]).filter((arm) => arms[arm] !== undefined);
 	const sum = active.reduce((value, arm) => value + weights[arm], 0);
 	if (sum <= 0 || active.length === 0) return [];
-	const byChunk = new Map<string, { candidate: RagQaSearchCandidate; score: number; arms: RagQaRetrievalArm[]; ranks: Partial<Record<RagQaRetrievalArm, number>> }>();
+	const byChunk = new Map<
+		string,
+		{
+			candidate: RagQaSearchCandidate;
+			score: number;
+			arms: RagQaRetrievalArm[];
+			ranks: Partial<Record<RagQaRetrievalArm, number>>;
+		}
+	>();
 	for (const arm of active) {
 		const normalizedWeight = weights[arm] / sum;
 		for (const [index, candidate] of (arms[arm] ?? []).entries()) {

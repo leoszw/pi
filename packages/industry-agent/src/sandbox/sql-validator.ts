@@ -10,17 +10,51 @@ interface SqlToken {
 }
 
 const FORBIDDEN_WORDS = new Set([
-	"INSERT", "UPDATE", "DELETE", "REPLACE", "MERGE", "UPSERT",
-	"CREATE", "ALTER", "DROP", "TRUNCATE", "RENAME",
-	"GRANT", "REVOKE", "SET", "USE", "CALL", "DO", "HANDLER", "LOAD",
-	"LOCK", "UNLOCK", "ANALYZE", "OPTIMIZE", "REPAIR", "FLUSH", "KILL",
-	"INTO", "OUTFILE", "DUMPFILE", "PROCEDURE", "RECURSIVE", "FOR", "OFFSET",
+	"INSERT",
+	"UPDATE",
+	"DELETE",
+	"REPLACE",
+	"MERGE",
+	"UPSERT",
+	"CREATE",
+	"ALTER",
+	"DROP",
+	"TRUNCATE",
+	"RENAME",
+	"GRANT",
+	"REVOKE",
+	"SET",
+	"USE",
+	"CALL",
+	"DO",
+	"HANDLER",
+	"LOAD",
+	"LOCK",
+	"UNLOCK",
+	"ANALYZE",
+	"OPTIMIZE",
+	"REPAIR",
+	"FLUSH",
+	"KILL",
+	"INTO",
+	"OUTFILE",
+	"DUMPFILE",
+	"PROCEDURE",
+	"RECURSIVE",
+	"FOR",
+	"OFFSET",
 ]);
 
 const FORBIDDEN_SCHEMAS = new Set(["INFORMATION_SCHEMA", "MYSQL", "PERFORMANCE_SCHEMA", "SYS"]);
 const FORBIDDEN_FUNCTIONS = new Set([
-	"LOAD_FILE", "SLEEP", "BENCHMARK", "GET_LOCK", "RELEASE_LOCK", "IS_USED_LOCK",
-	"MASTER_POS_WAIT", "UUID_SHORT",
+	"LOAD_FILE",
+	"SLEEP",
+	"BENCHMARK",
+	"GET_LOCK",
+	"RELEASE_LOCK",
+	"IS_USED_LOCK",
+	"MASTER_POS_WAIT",
+	"UUID_SHORT",
 ]);
 
 function fail(queryId: string, message: string): never {
@@ -32,10 +66,14 @@ function tokenize(queryId: string, sql: string): SqlToken[] {
 	let i = 0;
 	while (i < sql.length) {
 		const ch = sql[i]!;
-		if (/\s/.test(ch)) { i += 1; continue; }
+		if (/\s/.test(ch)) {
+			i += 1;
+			continue;
+		}
 		if (ch === "\0") fail(queryId, "NUL bytes are not allowed");
-		if ((ch === "-" && sql[i + 1] === "-") || ch === "#" || (ch === "/" && sql[i + 1] === "*")) fail(queryId, "SQL comments are not allowed");
-		if (ch === "'" || ch === "\"") {
+		if ((ch === "-" && sql[i + 1] === "-") || ch === "#" || (ch === "/" && sql[i + 1] === "*"))
+			fail(queryId, "SQL comments are not allowed");
+		if (ch === "'" || ch === '"') {
 			const quote = ch;
 			let value = ch;
 			i += 1;
@@ -91,14 +129,20 @@ function tokenize(queryId: string, sql: string): SqlToken[] {
 		if (/[A-Za-z_]/.test(ch)) {
 			let value = ch;
 			i += 1;
-			while (i < sql.length && /[A-Za-z0-9_$]/.test(sql[i]!)) { value += sql[i]!; i += 1; }
+			while (i < sql.length && /[A-Za-z0-9_$]/.test(sql[i]!)) {
+				value += sql[i]!;
+				i += 1;
+			}
 			tokens.push({ kind: "WORD", value, upper: value.toUpperCase() });
 			continue;
 		}
 		if (/[0-9]/.test(ch)) {
 			let value = ch;
 			i += 1;
-			while (i < sql.length && /[0-9.]/.test(sql[i]!)) { value += sql[i]!; i += 1; }
+			while (i < sql.length && /[0-9.]/.test(sql[i]!)) {
+				value += sql[i]!;
+				i += 1;
+			}
 			tokens.push({ kind: "NUMBER", value, upper: value });
 			continue;
 		}
@@ -139,7 +183,10 @@ function collectCteNames(tokens: readonly SqlToken[], queryId: string): Readonly
 		if (tokens[i]?.value === "(") i = matchingParen(tokens, i, queryId) + 1;
 		if (tokens[i]?.upper !== "AS" || tokens[i + 1]?.value !== "(") fail(queryId, "CTE must use AS (...)");
 		i = matchingParen(tokens, i + 1, queryId) + 1;
-		if (tokens[i]?.value === ",") { i += 1; continue; }
+		if (tokens[i]?.value === ",") {
+			i += 1;
+			continue;
+		}
 		break;
 	}
 	if (tokens[i]?.upper !== "SELECT") fail(queryId, "WITH query must end in a SELECT statement");
@@ -169,20 +216,28 @@ function extractTables(tokens: readonly SqlToken[], cteNames: ReadonlySet<string
 	return [...output];
 }
 
-
 function rejectCommaJoins(tokens: readonly SqlToken[], queryId: string): void {
 	let depth = 0;
 	const fromDepths = new Set<number>();
 	const endClauses = new Set(["WHERE", "GROUP", "HAVING", "ORDER", "LIMIT", "UNION", "EXCEPT", "INTERSECT", "WINDOW"]);
 	for (const token of tokens) {
-		if (token.value === "(") { depth += 1; continue; }
+		if (token.value === "(") {
+			depth += 1;
+			continue;
+		}
 		if (token.value === ")") {
 			fromDepths.delete(depth);
 			depth = Math.max(0, depth - 1);
 			continue;
 		}
-		if (token.upper === "FROM") { fromDepths.add(depth); continue; }
-		if (token.kind === "WORD" && endClauses.has(token.upper)) { fromDepths.delete(depth); continue; }
+		if (token.upper === "FROM") {
+			fromDepths.add(depth);
+			continue;
+		}
+		if (token.kind === "WORD" && endClauses.has(token.upper)) {
+			fromDepths.delete(depth);
+			continue;
+		}
 		if (token.value === "," && fromDepths.has(depth)) fail(queryId, "comma joins are not allowed; use explicit JOIN");
 	}
 }
@@ -197,7 +252,11 @@ export interface SqlValidationResult {
 	limit: number;
 }
 
-export function validateReadOnlySqlQuery(query: SandboxSqlQuery, schema: SandboxSchemaSnapshot, limits: SandboxLimits): SqlValidationResult {
+export function validateReadOnlySqlQuery(
+	query: SandboxSqlQuery,
+	schema: SandboxSchemaSnapshot,
+	limits: SandboxLimits,
+): SqlValidationResult {
 	const queryId = query.queryId.trim();
 	if (!queryId) throw new IndustryAgentError("SANDBOX_STATIC_VALIDATION_FAILED", "SQL queryId must not be empty");
 	const sql = query.sql.trim();
@@ -208,18 +267,26 @@ export function validateReadOnlySqlQuery(query: SandboxSqlQuery, schema: Sandbox
 
 	const tokens = tokenize(queryId, sql);
 	if (!tokens.length) fail(queryId, "query is empty");
-	const semicolons = tokens.map((token, index) => token.value === ";" ? index : -1).filter((index) => index >= 0);
-	if (semicolons.length > 1 || (semicolons.length === 1 && semicolons[0] !== tokens.length - 1)) fail(queryId, "multiple SQL statements are not allowed");
+	const semicolons = tokens.map((token, index) => (token.value === ";" ? index : -1)).filter((index) => index >= 0);
+	if (semicolons.length > 1 || (semicolons.length === 1 && semicolons[0] !== tokens.length - 1))
+		fail(queryId, "multiple SQL statements are not allowed");
 	const effective = semicolons.length ? tokens.slice(0, -1) : tokens;
 	if (!effective.length) fail(queryId, "query is empty");
-	if (effective[0]!.upper !== "SELECT" && effective[0]!.upper !== "WITH") fail(queryId, "only SELECT statements are allowed");
+	if (effective[0]!.upper !== "SELECT" && effective[0]!.upper !== "WITH")
+		fail(queryId, "only SELECT statements are allowed");
 	for (const token of effective) {
-		if (token.kind === "WORD" && FORBIDDEN_WORDS.has(token.upper)) fail(queryId, `forbidden SQL keyword: ${token.upper}`);
-		if ((token.kind === "WORD" || token.kind === "IDENT") && FORBIDDEN_SCHEMAS.has(token.upper)) fail(queryId, `system schema is not allowed: ${token.value}`);
+		if (token.kind === "WORD" && FORBIDDEN_WORDS.has(token.upper))
+			fail(queryId, `forbidden SQL keyword: ${token.upper}`);
+		if ((token.kind === "WORD" || token.kind === "IDENT") && FORBIDDEN_SCHEMAS.has(token.upper))
+			fail(queryId, `system schema is not allowed: ${token.value}`);
 		if (token.value === "*") fail(queryId, "wildcard SELECT is not allowed; columns must be explicit");
 	}
 	for (let i = 0; i < effective.length - 1; i += 1) {
-		if ((effective[i]!.kind === "WORD" || effective[i]!.kind === "IDENT") && effective[i + 1]!.value === "(" && FORBIDDEN_FUNCTIONS.has(effective[i]!.upper)) {
+		if (
+			(effective[i]!.kind === "WORD" || effective[i]!.kind === "IDENT") &&
+			effective[i + 1]!.value === "(" &&
+			FORBIDDEN_FUNCTIONS.has(effective[i]!.upper)
+		) {
 			fail(queryId, `forbidden SQL function: ${effective[i]!.upper}`);
 		}
 	}
@@ -227,17 +294,23 @@ export function validateReadOnlySqlQuery(query: SandboxSqlQuery, schema: Sandbox
 	const cteNames = collectCteNames(effective, queryId);
 	const extractedTables = extractTables(effective, cteNames);
 	const schemaTables = new Set(schema.tables.map((table) => normalizedName(table.tableName)));
-	for (const table of declared) if (!schemaTables.has(table)) fail(queryId, `declared table is not in the sandbox schema snapshot: ${table}`);
+	for (const table of declared)
+		if (!schemaTables.has(table)) fail(queryId, `declared table is not in the sandbox schema snapshot: ${table}`);
 	for (const table of extractedTables.map(normalizedName)) {
-		if (!schemaTables.has(table)) fail(queryId, `query references table outside the sandbox schema snapshot: ${table}`);
+		if (!schemaTables.has(table))
+			fail(queryId, `query references table outside the sandbox schema snapshot: ${table}`);
 		if (!declared.includes(table)) fail(queryId, `query table is missing from referencedTables: ${table}`);
 	}
 
-	const limitIndexes = effective.map((token, index) => token.upper === "LIMIT" ? index : -1).filter((index) => index >= 0);
+	const limitIndexes = effective
+		.map((token, index) => (token.upper === "LIMIT" ? index : -1))
+		.filter((index) => index >= 0);
 	if (limitIndexes.length !== 1) fail(queryId, "query must contain exactly one LIMIT clause");
 	const limitToken = effective[limitIndexes[0]! + 1];
-	if (!limitToken || limitToken.kind !== "NUMBER" || !/^\d+$/.test(limitToken.value)) fail(queryId, "LIMIT must be a positive integer literal");
+	if (!limitToken || limitToken.kind !== "NUMBER" || !/^\d+$/.test(limitToken.value))
+		fail(queryId, "LIMIT must be a positive integer literal");
 	const limit = Number(limitToken.value);
-	if (!Number.isSafeInteger(limit) || limit <= 0 || limit > limits.maxRowsPerQuery) fail(queryId, `LIMIT must be between 1 and ${limits.maxRowsPerQuery}`);
+	if (!Number.isSafeInteger(limit) || limit <= 0 || limit > limits.maxRowsPerQuery)
+		fail(queryId, `LIMIT must be between 1 and ${limits.maxRowsPerQuery}`);
 	return { query: { ...query, queryId, sql }, extractedTables, limit };
 }

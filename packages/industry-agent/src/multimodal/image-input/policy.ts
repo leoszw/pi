@@ -5,5 +5,7 @@ export class StaticImageActionPolicyRegistry implements ImageActionPolicyRegistr
 	constructor(policies: readonly ImageActionPolicy[]) {
 		this.policies = new Map(policies.map((policy) => [policy.entityType, policy]));
 	}
-	get(entityType: string): ImageActionPolicy | undefined { return this.policies.get(entityType); }
+	get(entityType: string): ImageActionPolicy | undefined {
+		return this.policies.get(entityType);
+	}
 }

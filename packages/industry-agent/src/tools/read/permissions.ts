@@ -10,8 +10,17 @@ export interface ReadPermissionGrant {
 
 export class InMemoryReadToolPermissionService implements ReadToolPermissionService {
 	private readonly grants: readonly ReadPermissionGrant[];
-	constructor(grants: readonly ReadPermissionGrant[]) { this.grants = grants.map((grant) => ({ ...grant, permissions: [...grant.permissions] })); }
+	constructor(grants: readonly ReadPermissionGrant[]) {
+		this.grants = grants.map((grant) => ({ ...grant, permissions: [...grant.permissions] }));
+	}
 	async authorize(input: ReadToolPermissionInput): Promise<boolean> {
-		return this.grants.some((grant) => grant.userId === input.userId && grant.tenantId === input.tenantId && grant.companyId === input.companyId && grant.projectId === input.projectId && grant.permissions.includes(input.permission));
+		return this.grants.some(
+			(grant) =>
+				grant.userId === input.userId &&
+				grant.tenantId === input.tenantId &&
+				grant.companyId === input.companyId &&
+				grant.projectId === input.projectId &&
+				grant.permissions.includes(input.permission),
+		);
 	}
 }

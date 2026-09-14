@@ -17,7 +17,9 @@ export function stableJson(value: unknown): string {
 }
 
 export function sha256Hex(value: unknown): string {
-	return createHash("sha256").update(typeof value === "string" ? value : stableJson(value)).digest("hex");
+	return createHash("sha256")
+		.update(typeof value === "string" ? value : stableJson(value))
+		.digest("hex");
 }
 
 export function computeBatchRecordVersion(targets: readonly MutationTargetProposal[]): string {
@@ -26,7 +28,12 @@ export function computeBatchRecordVersion(targets: readonly MutationTargetPropos
 	return `batch:${sha256Hex(parts)}`;
 }
 
-export function computeMutationDigest(input: Omit<MutationProposalRecord, "digest" | "status" | "createdAt" | "approvedAt" | "committedAt" | "resultEntityIds">): string {
+export function computeMutationDigest(
+	input: Omit<
+		MutationProposalRecord,
+		"digest" | "status" | "createdAt" | "approvedAt" | "committedAt" | "resultEntityIds"
+	>,
+): string {
 	return sha256Hex({
 		operationId: input.operationId,
 		traceId: input.traceId,

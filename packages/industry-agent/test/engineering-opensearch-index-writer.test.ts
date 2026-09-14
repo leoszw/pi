@@ -36,9 +36,15 @@ describe("OpenSearchEngineeringIndexWriter", () => {
 		const writer = new OpenSearchEngineeringIndexWriter({
 			indexName: "engineering_position_v1",
 			transport: {
-				async index(_index, id, body) { calls.push({ op: "index", id, body }); },
-				async update(_index, id, body) { calls.push({ op: "update", id, body }); },
-				async delete(_index, id) { calls.push({ op: "delete", id }); },
+				async index(_index, id, body) {
+					calls.push({ op: "index", id, body });
+				},
+				async update(_index, id, body) {
+					calls.push({ op: "update", id, body });
+				},
+				async delete(_index, id) {
+					calls.push({ op: "delete", id });
+				},
 			},
 		});
 		await writer.upsert(document, { preserveExistingVectors: true });

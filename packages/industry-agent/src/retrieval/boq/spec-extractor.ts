@@ -1,10 +1,20 @@
 import { normalizeBoqText } from "./normalizer.ts";
 import type { BoqSpecToken } from "./types.ts";
 
-const ROMAN: Readonly<Record<string, string>> = { "Ⅰ": "I", "Ⅱ": "II", "Ⅲ": "III", "Ⅳ": "IV", "Ⅴ": "V", "Ⅵ": "VI" };
+const ROMAN: Readonly<Record<string, string>> = { Ⅰ: "I", Ⅱ: "II", Ⅲ: "III", Ⅳ: "IV", Ⅴ: "V", Ⅵ: "VI" };
 
-function collect(regex: RegExp, text: string, family: BoqSpecToken["family"], map: (match: RegExpMatchArray) => string): BoqSpecToken[] {
-	return Array.from(text.matchAll(regex)).map((match) => ({ family, value: map(match), confidence: 1, matchedText: match[0] }));
+function collect(
+	regex: RegExp,
+	text: string,
+	family: BoqSpecToken["family"],
+	map: (match: RegExpMatchArray) => string,
+): BoqSpecToken[] {
+	return Array.from(text.matchAll(regex)).map((match) => ({
+		family,
+		value: map(match),
+		confidence: 1,
+		matchedText: match[0],
+	}));
 }
 
 export function extractBoqSpecTokens(input: string): BoqSpecToken[] {
@@ -12,7 +22,9 @@ export function extractBoqSpecTokens(input: string): BoqSpecToken[] {
 	const tokens = [
 		...collect(/\bC(?:1[5-9]|[2-9]\d)\b/gi, text, "concrete_grade", (m) => m[0].toUpperCase()),
 		...collect(/\b(?:HPB|HRB)\d{3}\b/gi, text, "rebar_grade", (m) => m[0].toUpperCase()),
-		...collect(/(?:φ\s*\d+(?:\.\d+)?(?:\s*mm)?|\bD\s*\d+(?:\.\d+)?\s*(?:mm|cm|m)\b)/gi, text, "diameter", (m) => m[0].replace(/\s+/g, "").toUpperCase().replace(/^Φ/, "φ")),
+		...collect(/(?:φ\s*\d+(?:\.\d+)?(?:\s*mm)?|\bD\s*\d+(?:\.\d+)?\s*(?:mm|cm|m)\b)/gi, text, "diameter", (m) =>
+			m[0].replace(/\s+/g, "").toUpperCase().replace(/^Φ/, "φ"),
+		),
 		...collect(/(?:厚(?:度)?\s*)?(?<![φΦФфØDd])(\d+(?:\.\d+)?)\s*mm\b/gi, text, "thickness", (m) => `T${m[1]}MM`),
 		...collect(/(\d+(?:\.\d+)?)\s*%/g, text, "percentage", (m) => `PCT${m[1]}`),
 		...collect(/([ⅠⅡⅢⅣⅤⅥ])\s*级/g, text, "rock_class", (m) => `CLASS_${ROMAN[m[1] ?? ""] ?? m[1]}`),
@@ -22,7 +34,11 @@ export function extractBoqSpecTokens(input: string): BoqSpecToken[] {
 	return Array.from(deduped.values());
 }
 
-export function countCriticalSpecConflicts(query: readonly BoqSpecToken[], candidateTokens: readonly string[], candidateFamilies: readonly string[]): number {
+export function countCriticalSpecConflicts(
+	query: readonly BoqSpecToken[],
+	candidateTokens: readonly string[],
+	candidateFamilies: readonly string[],
+): number {
 	const candidateByFamily = new Map<string, Set<string>>();
 	candidateFamilies.forEach((family, index) => {
 		const value = candidateTokens[index];

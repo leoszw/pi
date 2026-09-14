@@ -6,21 +6,20 @@ import { normalizeFusionScores, weightedRrf } from "./fusion.ts";
 import { buildEngineeringFilterPlan, parseEngineeringQuery, relaxEngineeringFilters } from "./query-parser.ts";
 import type {
 	EngineeringArmHit,
+	EngineeringEmbeddingProvider,
 	EngineeringFusedCandidate,
+	EngineeringReranker,
 	EngineeringRetrievalArm,
 	EngineeringRetrievalBackend,
 	EngineeringRetrievalConfig,
 	EngineeringRetrievalDebug,
 	EngineeringRetrievalTraceSink,
 	EngineeringRrfWeights,
-	EngineeringSearchConfidence,
 	EngineeringSearchDocument,
+	EngineeringSearchFilters,
 	EngineeringSearchRequest,
 	EngineeringSearchResponse,
 	EngineeringSearchResult,
-	EngineeringEmbeddingProvider,
-	EngineeringReranker,
-	EngineeringSearchFilters,
 	ParsedEngineeringQuery,
 } from "./types.ts";
 
@@ -50,7 +49,9 @@ function clamp01(value: number): number {
 
 function directExactHit(hits: readonly EngineeringArmHit[]): EngineeringArmHit | undefined {
 	if (hits.length !== 1) return undefined;
-	const strong = hits[0]?.exactKinds?.some((kind) => kind === "ENGINEERING_CODE" || kind === "FULL_NAME" || kind === "NAME");
+	const strong = hits[0]?.exactKinds?.some(
+		(kind) => kind === "ENGINEERING_CODE" || kind === "FULL_NAME" || kind === "NAME",
+	);
 	return strong ? hits[0] : undefined;
 }
 
@@ -64,7 +65,9 @@ function rerankQuery(query: ParsedEngineeringQuery): string {
 		query.alignmentSide !== "NONE" ? `方向：${query.alignmentSide}` : undefined,
 		query.engineeringTypeName ? `工程类型：${query.engineeringTypeName}` : undefined,
 		query.engineeringCategoryName ? `工程类别：${query.engineeringCategoryName}` : undefined,
-	].filter((value): value is string => Boolean(value)).join("；");
+	]
+		.filter((value): value is string => Boolean(value))
+		.join("；");
 	return summary ? `${query.semanticQuery || query.rawQuery}；${summary}` : query.semanticQuery || query.rawQuery;
 }
 
@@ -85,7 +88,9 @@ function toDirectResult(document: EngineeringSearchDocument): EngineeringSearchR
 	};
 }
 
-function armCounts(arms: Readonly<Record<EngineeringRetrievalArm, readonly EngineeringArmHit[]>>): Readonly<Record<EngineeringRetrievalArm, number>> {
+function armCounts(
+	arms: Readonly<Record<EngineeringRetrievalArm, readonly EngineeringArmHit[]>>,
+): Readonly<Record<EngineeringRetrievalArm, number>> {
 	return { exact: arms.exact.length, bm25: arms.bm25.length, name: arms.name.length, context: arms.context.length };
 }
 
@@ -108,8 +113,10 @@ export class EngineeringRetrievalService {
 
 	async search(request: EngineeringSearchRequest): Promise<EngineeringSearchResponse> {
 		const started = this.nowMs();
-		if (request.query.trim().length === 0) throw new IndustryAgentError("INVALID_REQUEST", "engineering search query must not be empty");
-		if (request.projectId.trim().length === 0) throw new IndustryAgentError("INVALID_REQUEST", "engineering search projectId must not be empty");
+		if (request.query.trim().length === 0)
+			throw new IndustryAgentError("INVALID_REQUEST", "engineering search query must not be empty");
+		if (request.projectId.trim().length === 0)
+			throw new IndustryAgentError("INVALID_REQUEST", "engineering search projectId must not be empty");
 		const parseStart = this.nowMs();
 		const parsed = parseEngineeringQuery(request, this.config);
 		const plan = buildEngineeringFilterPlan(parsed, request.leafOnly);
@@ -120,7 +127,12 @@ export class EngineeringRetrievalService {
 		let retrievalMs = 0;
 		let embeddingMs = 0;
 		let rerankMs = 0;
-		let finalArms: Readonly<Record<EngineeringRetrievalArm, readonly EngineeringArmHit[]>> = { exact: [], bm25: [], name: [], context: [] };
+		let finalArms: Readonly<Record<EngineeringRetrievalArm, readonly EngineeringArmHit[]>> = {
+			exact: [],
+			bm25: [],
+			name: [],
+			context: [],
+		};
 		try {
 			const exactStart = this.nowMs();
 			let exactHits = await this.backend.searchExact(parsed, activeFilters, this.config.exactTopK);
@@ -130,7 +142,15 @@ export class EngineeringRetrievalService {
 				const result = toDirectResult(direct.document);
 				const confidence = directExactConfidence();
 				const totalMs = this.nowMs() - started;
-				const debug = this.buildDebug(request, activeFilters, { exact: exactHits.length, bm25: 0, name: 0, context: 0 }, 1, relaxedFilters, parsed, { parse: parseMs, embedding: 0, retrieve: retrievalMs, rerank: 0, total: totalMs });
+				const debug = this.buildDebug(
+					request,
+					activeFilters,
+					{ exact: exactHits.length, bm25: 0, name: 0, context: 0 },
+					1,
+					relaxedFilters,
+					parsed,
+					{ parse: parseMs, embedding: 0, retrieve: retrievalMs, rerank: 0, total: totalMs },
+				);
 				this.recordTrace(request.query, activeFilters, [result], totalMs, "OK");
 				return { parsedQuery: parsed, confidence, results: [result], ...(debug ? { debug } : {}) };
 			}
@@ -139,9 +159,17 @@ export class EngineeringRetrievalService {
 			const queryVector = await this.embedding.embed(parsed.semanticQuery || parsed.rawQuery);
 			embeddingMs = this.nowMs() - embedStart;
 			if (queryVector.length !== this.config.embeddingDimension || queryVector.length !== this.embedding.dimension) {
-				throw new IndustryAgentError("RETRIEVAL_ERROR", "engineering embedding dimension does not match retrieval config", {
-					details: { expected: this.config.embeddingDimension, provider: this.embedding.dimension, actual: queryVector.length },
-				});
+				throw new IndustryAgentError(
+					"RETRIEVAL_ERROR",
+					"engineering embedding dimension does not match retrieval config",
+					{
+						details: {
+							expected: this.config.embeddingDimension,
+							provider: this.embedding.dimension,
+							actual: queryVector.length,
+						},
+					},
+				);
 			}
 
 			let pass = await this.retrievePass(parsed, activeFilters, queryVector, exactHits);
@@ -160,14 +188,23 @@ export class EngineeringRetrievalService {
 			if (pass.value.fused.length === 0) {
 				const confidence = engineeringConfidencePolicy([], this.config);
 				const totalMs = this.nowMs() - started;
-				const debug = this.buildDebug(request, activeFilters, armCounts(finalArms), 0, relaxedFilters, parsed, { parse: parseMs, embedding: embeddingMs, retrieve: retrievalMs, rerank: 0, total: totalMs });
+				const debug = this.buildDebug(request, activeFilters, armCounts(finalArms), 0, relaxedFilters, parsed, {
+					parse: parseMs,
+					embedding: embeddingMs,
+					retrieve: retrievalMs,
+					rerank: 0,
+					total: totalMs,
+				});
 				this.recordTrace(request.query, activeFilters, [], totalMs, "OK");
 				return { parsedQuery: parsed, confidence, results: [], ...(debug ? { debug } : {}) };
 			}
 
 			const candidates = pass.value.fused.slice(0, this.config.rerankK);
 			const rerankStart = this.nowMs();
-			const rerankScores = await this.reranker.score(rerankQuery(parsed), candidates.map((candidate) => candidate.document));
+			const rerankScores = await this.reranker.score(
+				rerankQuery(parsed),
+				candidates.map((candidate) => candidate.document),
+			);
 			rerankMs = this.nowMs() - rerankStart;
 			if (rerankScores.length !== candidates.length) {
 				throw new IndustryAgentError("RETRIEVAL_ERROR", "reranker result count does not match candidate count", {
@@ -178,7 +215,15 @@ export class EngineeringRetrievalService {
 			const results = ranked.map((candidate) => candidate.result);
 			const confidence = engineeringConfidencePolicy(results, this.config);
 			const totalMs = this.nowMs() - started;
-			const debug = this.buildDebug(request, activeFilters, armCounts(finalArms), pass.value.fused.length, relaxedFilters, parsed, { parse: parseMs, embedding: embeddingMs, retrieve: retrievalMs, rerank: rerankMs, total: totalMs });
+			const debug = this.buildDebug(
+				request,
+				activeFilters,
+				armCounts(finalArms),
+				pass.value.fused.length,
+				relaxedFilters,
+				parsed,
+				{ parse: parseMs, embedding: embeddingMs, retrieve: retrievalMs, rerank: rerankMs, total: totalMs },
+			);
 			this.recordTrace(request.query, activeFilters, results, totalMs, "OK");
 			return { parsedQuery: parsed, confidence, results, ...(debug ? { debug } : {}) };
 		} catch (cause) {
@@ -202,7 +247,10 @@ export class EngineeringRetrievalService {
 			this.backend.searchDense("context_vector", queryVector, filters, this.config.contextVectorTopK),
 		]);
 		const arms = { exact: exactHits, bm25, name, context } as const;
-		const fused = weightedRrf(arms, weightsFor(parsed, this.config), this.config.rrfK).slice(0, this.config.fusionKeepK);
+		const fused = weightedRrf(arms, weightsFor(parsed, this.config), this.config.rrfK).slice(
+			0,
+			this.config.fusionKeepK,
+		);
 		return { value: { arms, fused }, retrieveMs: this.nowMs() - started };
 	}
 
@@ -217,9 +265,9 @@ export class EngineeringRetrievalService {
 			const rerank = clamp01(rerankScores[index] ?? 0);
 			const fusion = fusionNorm.get(candidate.document.engineeringId) ?? 0;
 			const finalScore = clamp01(
-				this.config.finalScoreWeights.rerank * rerank
-					+ this.config.finalScoreWeights.fusion * fusion
-					+ this.config.finalScoreWeights.business * business.score,
+				this.config.finalScoreWeights.rerank * rerank +
+					this.config.finalScoreWeights.fusion * fusion +
+					this.config.finalScoreWeights.business * business.score,
 			);
 			return {
 				document: candidate.document,
@@ -246,7 +294,8 @@ export class EngineeringRetrievalService {
 			const leftExact = (left.features.exactName ?? 0) + (left.features.positionTokenMatch ?? 0);
 			const rightExact = (right.features.exactName ?? 0) + (right.features.positionTokenMatch ?? 0);
 			if (rightExact !== leftExact) return rightExact - leftExact;
-			if ((right.features.unitMatch ?? 0) !== (left.features.unitMatch ?? 0)) return (right.features.unitMatch ?? 0) - (left.features.unitMatch ?? 0);
+			if ((right.features.unitMatch ?? 0) !== (left.features.unitMatch ?? 0))
+				return (right.features.unitMatch ?? 0) - (left.features.unitMatch ?? 0);
 			if (parsed.queryMode === "ENTITY_SHORT") {
 				if (right.document.isMinUnit !== left.document.isMinUnit) return right.document.isMinUnit ? 1 : -1;
 				if (right.document.depth !== left.document.depth) return right.document.depth - left.document.depth;

@@ -1,9 +1,66 @@
 import { describe, expect, it } from "vitest";
-import { buildMutationUiActions, diffAction, editableFormAction, entityPickerAction, formAction, mutationConfirmationAction, tableAction } from "../src/mutation/ui-actions.ts";
 import { computeBatchRecordVersion, computeMutationDigest } from "../src/mutation/digest.ts";
 import type { MutationProposalRecord, MutationScope, MutationTargetProposal } from "../src/mutation/types.ts";
-const scope:MutationScope={userId:"u",tenantId:"t",companyId:"c",projectId:"p"};
-describe("batch proposal and UI",()=>{
-	it("binds every record version and exposes affected count plus representative table",()=>{const targets:MutationTargetProposal[]=[{entityId:"1",recordVersion:"3",before:{x:1},after:{x:2}},{entityId:"2",recordVersion:"8",before:{x:1},after:{x:2}}];const recordVersion=computeBatchRecordVersion(targets);expect(recordVersion.startsWith("batch:")).toBe(true);const base={operationId:"op",traceId:"tr",requestId:"rq",operation:"UPDATE" as const,entityType:"X",scope,targets,recordVersion,affectedCount:2,representativeSamples:targets,diff:[{entityId:"1",field:"x",before:1,after:2}]};const digest=computeMutationDigest(base);const proposal:MutationProposalRecord={...base,digest,status:"PREPARED",createdAt:"2026-09-12T00:00:00Z"};const actions=buildMutationUiActions(proposal);expect(actions.some((a)=>a.type==="table")).toBe(true);expect(actions.at(-1)?.type).toBe("mutation_confirmation");expect((actions.at(-1)?.payload as {affectedCount:number}).affectedCount).toBe(2);});
-	it("supports the Phase 7 first UI action set",()=>{const actions=[entityPickerAction("1",{}),formAction("2",{}),editableFormAction("3",{}),tableAction("4",{}),diffAction("5",{}),mutationConfirmationAction("6",{})];expect(actions.map((a)=>a.type)).toEqual(["entity_picker","form","editable_form","table","diff","mutation_confirmation"]);});
+import {
+	buildMutationUiActions,
+	diffAction,
+	editableFormAction,
+	entityPickerAction,
+	formAction,
+	mutationConfirmationAction,
+	tableAction,
+} from "../src/mutation/ui-actions.ts";
+
+const scope: MutationScope = { userId: "u", tenantId: "t", companyId: "c", projectId: "p" };
+describe("batch proposal and UI", () => {
+	it("binds every record version and exposes affected count plus representative table", () => {
+		const targets: MutationTargetProposal[] = [
+			{ entityId: "1", recordVersion: "3", before: { x: 1 }, after: { x: 2 } },
+			{ entityId: "2", recordVersion: "8", before: { x: 1 }, after: { x: 2 } },
+		];
+		const recordVersion = computeBatchRecordVersion(targets);
+		expect(recordVersion.startsWith("batch:")).toBe(true);
+		const base = {
+			operationId: "op",
+			traceId: "tr",
+			requestId: "rq",
+			operation: "UPDATE" as const,
+			entityType: "X",
+			scope,
+			targets,
+			recordVersion,
+			affectedCount: 2,
+			representativeSamples: targets,
+			diff: [{ entityId: "1", field: "x", before: 1, after: 2 }],
+		};
+		const digest = computeMutationDigest(base);
+		const proposal: MutationProposalRecord = {
+			...base,
+			digest,
+			status: "PREPARED",
+			createdAt: "2026-09-12T00:00:00Z",
+		};
+		const actions = buildMutationUiActions(proposal);
+		expect(actions.some((a) => a.type === "table")).toBe(true);
+		expect(actions.at(-1)?.type).toBe("mutation_confirmation");
+		expect((actions.at(-1)?.payload as { affectedCount: number }).affectedCount).toBe(2);
+	});
+	it("supports the Phase 7 first UI action set", () => {
+		const actions = [
+			entityPickerAction("1", {}),
+			formAction("2", {}),
+			editableFormAction("3", {}),
+			tableAction("4", {}),
+			diffAction("5", {}),
+			mutationConfirmationAction("6", {}),
+		];
+		expect(actions.map((a) => a.type)).toEqual([
+			"entity_picker",
+			"form",
+			"editable_form",
+			"table",
+			"diff",
+			"mutation_confirmation",
+		]);
+	});
 });

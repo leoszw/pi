@@ -1,10 +1,25 @@
 import type { BoqArmHit, BoqRetrievalBackend, BoqSearchDocument, BoqSearchFilters, ParsedBoqQuery } from "./types.ts";
 
 export interface OpenSearchBoqTransport {
-	search(index: string, body: Readonly<Record<string, unknown>>): Promise<{ hits: { hits: readonly { _score?: number; _source?: Readonly<Record<string, unknown>>; matched_queries?: readonly string[] }[] } }>;
+	search(
+		index: string,
+		body: Readonly<Record<string, unknown>>,
+	): Promise<{
+		hits: {
+			hits: readonly {
+				_score?: number;
+				_source?: Readonly<Record<string, unknown>>;
+				matched_queries?: readonly string[];
+			}[];
+		};
+	}>;
 }
 
-export interface OpenSearchBoqBackendOptions { transport: OpenSearchBoqTransport; indexName: string; efSearch?: number; }
+export interface OpenSearchBoqBackendOptions {
+	transport: OpenSearchBoqTransport;
+	indexName: string;
+	efSearch?: number;
+}
 
 function filtersToDsl(filters: BoqSearchFilters): readonly Readonly<Record<string, unknown>>[] {
 	const result: Readonly<Record<string, unknown>>[] = [
@@ -18,8 +33,10 @@ function filtersToDsl(filters: BoqSearchFilters): readonly Readonly<Record<strin
 }
 
 function sourceToDocument(source: Readonly<Record<string, unknown>>): BoqSearchDocument {
-	const array = (key: string): readonly string[] => Array.isArray(source[key]) ? (source[key] as unknown[]).map(String) : [];
-	const string = (key: string): string | undefined => source[key] === undefined || source[key] === null ? undefined : String(source[key]);
+	const array = (key: string): readonly string[] =>
+		Array.isArray(source[key]) ? (source[key] as unknown[]).map(String) : [];
+	const string = (key: string): string | undefined =>
+		source[key] === undefined || source[key] === null ? undefined : String(source[key]);
 	const bool = (key: string): boolean => Boolean(source[key]);
 	const number = (key: string): number => Number(source[key] ?? 0);
 	const sectionId = string("section_id");
@@ -67,22 +84,43 @@ function sourceToDocument(source: Readonly<Record<string, unknown>>): BoqSearchD
 }
 
 function hits(response: Awaited<ReturnType<OpenSearchBoqTransport["search"]>>): readonly BoqArmHit[] {
-	return response.hits.hits.flatMap((hit) => hit._source ? [{ document: sourceToDocument(hit._source), ...(hit._score !== undefined ? { rawScore: hit._score } : {}), ...(hit.matched_queries ? { matchedQueries: hit.matched_queries } : {}) }] : []);
+	return response.hits.hits.flatMap((hit) =>
+		hit._source
+			? [
+					{
+						document: sourceToDocument(hit._source),
+						...(hit._score !== undefined ? { rawScore: hit._score } : {}),
+						...(hit.matched_queries ? { matchedQueries: hit.matched_queries } : {}),
+					},
+				]
+			: [],
+	);
 }
 
 export class OpenSearchBoqRetrievalBackend implements BoqRetrievalBackend {
 	private readonly transport: OpenSearchBoqTransport;
 	private readonly indexName: string;
 	private readonly efSearch: number;
-	constructor(options: OpenSearchBoqBackendOptions) { this.transport = options.transport; this.indexName = options.indexName; this.efSearch = options.efSearch ?? 160; }
+	constructor(options: OpenSearchBoqBackendOptions) {
+		this.transport = options.transport;
+		this.indexName = options.indexName;
+		this.efSearch = options.efSearch ?? 160;
+	}
 
 	async searchExactCode(query: ParsedBoqQuery, filters: BoqSearchFilters): Promise<readonly BoqArmHit[]> {
 		if (!query.ledgerCode) return [];
-		const response = await this.transport.search(this.indexName, { size: 2, query: { bool: { filter: [...filtersToDsl(filters), { term: { ledger_code_norm: query.ledgerCode } }] } } });
+		const response = await this.transport.search(this.indexName, {
+			size: 2,
+			query: { bool: { filter: [...filtersToDsl(filters), { term: { ledger_code_norm: query.ledgerCode } }] } },
+		});
 		return hits(response).map((hit) => ({ ...hit, exactKinds: ["LEDGER_CODE"] }));
 	}
 
-	async listDescendants(query: ParsedBoqQuery, filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]> {
+	async listDescendants(
+		query: ParsedBoqQuery,
+		filters: BoqSearchFilters,
+		topK: number,
+	): Promise<readonly BoqArmHit[]> {
 		if (!query.ancestorCode) return [];
 		const response = await this.transport.search(this.indexName, {
 			size: topK,
@@ -94,11 +132,19 @@ export class OpenSearchBoqRetrievalBackend implements BoqRetrievalBackend {
 
 	async searchExact(query: ParsedBoqQuery, filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]> {
 		const should: Readonly<Record<string, unknown>>[] = [];
-		if (query.ledgerNameNorm) should.push({ term: { "ledger_name_norm.keyword": { value: query.ledgerNameNorm, boost: 8, _name: "name" } } });
-		for (const alias of query.aliases) should.push({ term: { alias_terms: { value: alias, boost: 6, _name: "alias" } } });
-		for (const token of query.specTokens) should.push({ term: { spec_tokens: { value: token.value, boost: 4, _name: `spec:${token.value}` } } });
+		if (query.ledgerNameNorm)
+			should.push({
+				term: { "ledger_name_norm.keyword": { value: query.ledgerNameNorm, boost: 8, _name: "name" } },
+			});
+		for (const alias of query.aliases)
+			should.push({ term: { alias_terms: { value: alias, boost: 6, _name: "alias" } } });
+		for (const token of query.specTokens)
+			should.push({ term: { spec_tokens: { value: token.value, boost: 4, _name: `spec:${token.value}` } } });
 		if (should.length === 0) return [];
-		const response = await this.transport.search(this.indexName, { size: topK, query: { bool: { filter: filtersToDsl(filters), should, minimum_should_match: 1 } } });
+		const response = await this.transport.search(this.indexName, {
+			size: topK,
+			query: { bool: { filter: filtersToDsl(filters), should, minimum_should_match: 1 } },
+		});
 		return hits(response);
 	}
 
@@ -106,15 +152,42 @@ export class OpenSearchBoqRetrievalBackend implements BoqRetrievalBackend {
 		if (!query.semanticQuery) return [];
 		const response = await this.transport.search(this.indexName, {
 			size: topK,
-			query: { bool: { filter: filtersToDsl(filters), must: [{ multi_match: { query: query.semanticQuery, type: "best_fields", fields: ["ledger_name_norm^6", "path_text^4", "section_name^2", "search_text^1"] } }] } },
+			query: {
+				bool: {
+					filter: filtersToDsl(filters),
+					must: [
+						{
+							multi_match: {
+								query: query.semanticQuery,
+								type: "best_fields",
+								fields: ["ledger_name_norm^6", "path_text^4", "section_name^2", "search_text^1"],
+							},
+						},
+					],
+				},
+			},
 		});
 		return hits(response);
 	}
 
-	async searchDense(field: "item_vector" | "context_vector", queryVector: readonly number[], filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]> {
+	async searchDense(
+		field: "item_vector" | "context_vector",
+		queryVector: readonly number[],
+		filters: BoqSearchFilters,
+		topK: number,
+	): Promise<readonly BoqArmHit[]> {
 		const response = await this.transport.search(this.indexName, {
 			size: topK,
-			query: { knn: { [field]: { vector: queryVector, k: topK, filter: { bool: { filter: filtersToDsl(filters) } }, method_parameters: { ef_search: this.efSearch } } } },
+			query: {
+				knn: {
+					[field]: {
+						vector: queryVector,
+						k: topK,
+						filter: { bool: { filter: filtersToDsl(filters) } },
+						method_parameters: { ef_search: this.efSearch },
+					},
+				},
+			},
 		});
 		return hits(response);
 	}

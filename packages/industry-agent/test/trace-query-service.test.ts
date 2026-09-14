@@ -27,7 +27,11 @@ describe("TraceQueryService", () => {
 		collector.recordAgentEvent({ type: "agent_start" });
 		collector.recordAgentEvent({ type: "turn_start" });
 		collector.recordRetrieval({ retrievalType: "test", status: "OK", query: "hello" });
-		collector.recordAgentEvent({ type: "turn_end", message: { role: "user", content: "hello", timestamp: 1 }, toolResults: [] });
+		collector.recordAgentEvent({
+			type: "turn_end",
+			message: { role: "user", content: "hello", timestamp: 1 },
+			toolResults: [],
+		});
 		collector.recordAgentEvent({ type: "agent_end", messages: [{ role: "user", content: "hello", timestamp: 1 }] });
 		await collector.flush();
 
@@ -37,7 +41,9 @@ describe("TraceQueryService", () => {
 		const tree = await service.getTree("trace-query", scope);
 		const stats = await service.getStats("trace-query", scope);
 
-		expect(timeline.map((item) => item.sequence)).toEqual([...timeline.map((item) => item.sequence)].sort((a, b) => a - b));
+		expect(timeline.map((item) => item.sequence)).toEqual(
+			[...timeline.map((item) => item.sequence)].sort((a, b) => a - b),
+		);
 		expect(tree.roots).toHaveLength(1);
 		expect(tree.roots[0]?.children).toHaveLength(1);
 		expect(stats.retrievalCount).toBe(1);

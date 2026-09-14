@@ -64,13 +64,24 @@ describe("EngineeringRetrievalService", () => {
 			async searchExact(): Promise<readonly EngineeringArmHit[]> {
 				return [{ document: document("e1", { engineeringCode: "ENG-001" }), exactKinds: ["ENGINEERING_CODE"] }];
 			},
-			async searchBm25() { return []; },
-			async searchDense() { denseCalls += 1; return []; },
+			async searchBm25() {
+				return [];
+			},
+			async searchDense() {
+				denseCalls += 1;
+				return [];
+			},
 		};
 		const service = new EngineeringRetrievalService({
 			backend,
 			embedding,
-			reranker: { modelVersion: "reranker-v1", async score() { rerankCalls += 1; return []; } },
+			reranker: {
+				modelVersion: "reranker-v1",
+				async score() {
+					rerankCalls += 1;
+					return [];
+				},
+			},
 		});
 		const result = await service.search({ query: "工程编码 ENG-001", projectId: "p1" });
 		expect(result.confidence.level).toBe("EXACT");
@@ -82,14 +93,25 @@ describe("EngineeringRetrievalService", () => {
 	it("keeps an ambiguous short entity as multiple candidates instead of auto accepting", async () => {
 		const docs = [document("e1"), document("e2")];
 		const backend: EngineeringRetrievalBackend = {
-			async searchExact() { return []; },
-			async searchBm25() { return docs.map((item) => ({ document: item })); },
-			async searchDense() { return docs.map((item) => ({ document: item })); },
+			async searchExact() {
+				return [];
+			},
+			async searchBm25() {
+				return docs.map((item) => ({ document: item }));
+			},
+			async searchDense() {
+				return docs.map((item) => ({ document: item }));
+			},
 		};
 		const service = new EngineeringRetrievalService({
 			backend,
 			embedding,
-			reranker: { modelVersion: "reranker-v1", async score(_query, candidates) { return candidates.map(() => 0.75); } },
+			reranker: {
+				modelVersion: "reranker-v1",
+				async score(_query, candidates) {
+					return candidates.map(() => 0.75);
+				},
+			},
 		});
 		const result = await service.search({ query: "涵台基础", projectId: "p1" });
 		expect(result.results).toHaveLength(2);
@@ -117,7 +139,12 @@ describe("EngineeringRetrievalService", () => {
 		const service = new EngineeringRetrievalService({
 			backend,
 			embedding,
-			reranker: { modelVersion: "reranker-v1", async score(_query, candidates) { return candidates.map(() => 0.9); } },
+			reranker: {
+				modelVersion: "reranker-v1",
+				async score(_query, candidates) {
+					return candidates.map(() => 0.9);
+				},
+			},
 			trace,
 		});
 		const result = await service.search({

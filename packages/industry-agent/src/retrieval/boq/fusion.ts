@@ -1,6 +1,11 @@
 import type { BoqArmHit, BoqFusedCandidate, BoqRetrievalArm, BoqRrfWeights } from "./types.ts";
 
-const WEIGHT_KEY: Readonly<Record<BoqRetrievalArm, keyof BoqRrfWeights>> = { exact: "exact", bm25: "bm25", item: "item", context: "context" };
+const WEIGHT_KEY: Readonly<Record<BoqRetrievalArm, keyof BoqRrfWeights>> = {
+	exact: "exact",
+	bm25: "bm25",
+	item: "item",
+	context: "context",
+};
 
 export function normalizeActiveWeights(weights: BoqRrfWeights, activeArms: readonly BoqRetrievalArm[]): BoqRrfWeights {
 	const active = new Set(activeArms);
@@ -30,7 +35,12 @@ export function weightedBoqRrf(
 			seen.add(id);
 			const rank = index + 1;
 			const contribution = normalized[WEIGHT_KEY[arm]] / (rrfK + rank);
-			const current = candidates.get(id) ?? { document: hit.document, fusionScore: 0, armRanks: {}, armContributions: {} };
+			const current = candidates.get(id) ?? {
+				document: hit.document,
+				fusionScore: 0,
+				armRanks: {},
+				armContributions: {},
+			};
 			candidates.set(id, {
 				...current,
 				fusionScore: current.fusionScore + contribution,
@@ -41,6 +51,12 @@ export function weightedBoqRrf(
 	}
 	const theoreticalMax = rrfK >= 0 ? 1 / (rrfK + 1) : 1;
 	return Array.from(candidates.values())
-		.map((candidate) => ({ ...candidate, fusionNorm: theoreticalMax > 0 ? Math.min(1, Math.max(0, candidate.fusionScore / theoreticalMax)) : 0 }))
-		.sort((left, right) => right.fusionScore - left.fusionScore || left.document.ledgerId.localeCompare(right.document.ledgerId));
+		.map((candidate) => ({
+			...candidate,
+			fusionNorm: theoreticalMax > 0 ? Math.min(1, Math.max(0, candidate.fusionScore / theoreticalMax)) : 0,
+		}))
+		.sort(
+			(left, right) =>
+				right.fusionScore - left.fusionScore || left.document.ledgerId.localeCompare(right.document.ledgerId),
+		);
 }

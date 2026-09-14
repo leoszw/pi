@@ -40,9 +40,6 @@ describe("Phase 2 normalizers", () => {
 		expect(normalizeDateExpression("昨天", referenceDate)).toBe("2026-09-10");
 		expect(normalizeDateExpression("2026年9月12日", referenceDate)).toBe("2026-09-12");
 		expect(normalizeDateExpression("2026-02-30", referenceDate)).toBeUndefined();
-		expect(extractDate("2026-09-10 至 2026-09-12", referenceDate).range?.value).toEqual([
-			"2026-09-10",
-			"2026-09-12",
-		]);
+		expect(extractDate("2026-09-10 至 2026-09-12", referenceDate).range?.value).toEqual(["2026-09-10", "2026-09-12"]);
 	});
 });

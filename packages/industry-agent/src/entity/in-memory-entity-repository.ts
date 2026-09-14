@@ -11,10 +11,12 @@ import type {
 } from "./types.ts";
 
 function matchesScope(entity: CanonicalEntity, scope: EntityScopeQuery): boolean {
-	return entity.scope.tenantId === scope.tenantId &&
+	return (
+		entity.scope.tenantId === scope.tenantId &&
 		(scope.industryId === undefined || entity.scope.industryId === scope.industryId) &&
 		(scope.companyId === undefined || entity.scope.companyId === scope.companyId) &&
-		(scope.projectId === undefined || entity.scope.projectId === scope.projectId);
+		(scope.projectId === undefined || entity.scope.projectId === scope.projectId)
+	);
 }
 
 function embeddingKey(entityId: string, embeddingProfile: string, indexVersion: string): string {
@@ -76,7 +78,11 @@ export class InMemoryEntityRepository implements EntityRepository {
 		this.aliases.set(alias.aliasId, structuredClone({ ...alias, normalizedAlias }));
 	}
 
-	async getEmbeddingMeta(entityId: string, embeddingProfile: string, indexVersion: string): Promise<EntityEmbeddingMeta | undefined> {
+	async getEmbeddingMeta(
+		entityId: string,
+		embeddingProfile: string,
+		indexVersion: string,
+	): Promise<EntityEmbeddingMeta | undefined> {
 		const value = this.embeddingMeta.get(embeddingKey(entityId, embeddingProfile, indexVersion));
 		return value ? structuredClone(value) : undefined;
 	}
@@ -88,7 +94,10 @@ export class InMemoryEntityRepository implements EntityRepository {
 		if (!Number.isInteger(meta.embeddingDimension) || meta.embeddingDimension <= 0) {
 			throw new IndustryAgentError("REPOSITORY_ERROR", "embeddingDimension must be a positive integer");
 		}
-		this.embeddingMeta.set(embeddingKey(meta.entityId, meta.embeddingProfile, meta.indexVersion), structuredClone(meta));
+		this.embeddingMeta.set(
+			embeddingKey(meta.entityId, meta.embeddingProfile, meta.indexVersion),
+			structuredClone(meta),
+		);
 	}
 
 	async listOntologyItems(tenantId: string, ontologyType?: string): Promise<readonly OntologyItem[]> {

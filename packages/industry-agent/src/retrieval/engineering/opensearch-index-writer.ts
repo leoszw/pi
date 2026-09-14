@@ -16,7 +16,9 @@ function compact(entries: readonly [string, unknown][]): Readonly<Record<string,
 	return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
 }
 
-export function engineeringDocumentToOpenSearchSource(document: EngineeringSearchDocument): Readonly<Record<string, unknown>> {
+export function engineeringDocumentToOpenSearchSource(
+	document: EngineeringSearchDocument,
+): Readonly<Record<string, unknown>> {
 	return compact([
 		["engineering_id", document.engineeringId],
 		["engineering_code", document.engineeringCode],
@@ -57,7 +59,9 @@ export function engineeringDocumentToOpenSearchSource(document: EngineeringSearc
 }
 
 function withoutVectors(source: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
-	return Object.fromEntries(Object.entries(source).filter(([key]) => key !== "name_vector" && key !== "context_vector"));
+	return Object.fromEntries(
+		Object.entries(source).filter(([key]) => key !== "name_vector" && key !== "context_vector"),
+	);
 }
 
 export class OpenSearchEngineeringIndexWriter implements EngineeringIndexWriter {

@@ -179,7 +179,15 @@ export interface ReleaseGateConfig {
 	metricRules: Readonly<Partial<Record<EvalMetricName, MetricGateRule>>>;
 }
 
-export const RELEASE_COMPONENTS = ["prompt", "normalizer", "embedding", "index", "rrf", "reranker", "toolSchema"] as const;
+export const RELEASE_COMPONENTS = [
+	"prompt",
+	"normalizer",
+	"embedding",
+	"index",
+	"rrf",
+	"reranker",
+	"toolSchema",
+] as const;
 export type ReleaseComponentName = (typeof RELEASE_COMPONENTS)[number];
 
 export interface VersionedArtifact {

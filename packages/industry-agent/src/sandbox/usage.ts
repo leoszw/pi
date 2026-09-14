@@ -15,17 +15,30 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
 }
 
 export function validateSandboxUsage(value: unknown): SandboxUsage {
-	if (!isRecord(value)) throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", "Sandbox usage must be an object");
+	if (!isRecord(value))
+		throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", "Sandbox usage must be an object");
 	const fields = ["inputTokens", "outputTokens", "cachedTokens", "reasoningTokens", "totalTokens"] as const;
-	const tokens: Record<(typeof fields)[number], number> = { inputTokens: 0, outputTokens: 0, cachedTokens: 0, reasoningTokens: 0, totalTokens: 0 };
+	const tokens: Record<(typeof fields)[number], number> = {
+		inputTokens: 0,
+		outputTokens: 0,
+		cachedTokens: 0,
+		reasoningTokens: 0,
+		totalTokens: 0,
+	};
 	for (const field of fields) {
 		const item = value[field];
-		if (typeof item !== "number" || !Number.isInteger(item) || item < 0) throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", `Invalid usage field: ${field}`);
+		if (typeof item !== "number" || !Number.isInteger(item) || item < 0)
+			throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", `Invalid usage field: ${field}`);
 		tokens[field] = item;
 	}
-	if (tokens.totalTokens < tokens.inputTokens + tokens.outputTokens) throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", "totalTokens must cover inputTokens + outputTokens");
-	const costUsd = value["costUsd"];
-	if (typeof costUsd !== "number" || !Number.isFinite(costUsd) || costUsd < 0) throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", "Invalid sandbox cost usage");
+	if (tokens.totalTokens < tokens.inputTokens + tokens.outputTokens)
+		throw new IndustryAgentError(
+			"SANDBOX_USAGE_ACCOUNTING_INCOMPLETE",
+			"totalTokens must cover inputTokens + outputTokens",
+		);
+	const costUsd = value.costUsd;
+	if (typeof costUsd !== "number" || !Number.isFinite(costUsd) || costUsd < 0)
+		throw new IndustryAgentError("SANDBOX_USAGE_ACCOUNTING_INCOMPLETE", "Invalid sandbox cost usage");
 	return { ...tokens, costUsd };
 }
 
@@ -40,7 +53,12 @@ export function addSandboxUsage(left: SandboxUsage, right: SandboxUsage): Sandbo
 	};
 }
 
-export function sandboxBudget(limits: SandboxLimits, usage: SandboxUsage, startedAt: number, nowMs: number): SandboxBudgetView {
+export function sandboxBudget(
+	limits: SandboxLimits,
+	usage: SandboxUsage,
+	startedAt: number,
+	nowMs: number,
+): SandboxBudgetView {
 	return {
 		remainingTokens: Math.max(0, limits.maxTotalTokens - usage.totalTokens),
 		remainingCostUsd: Math.max(0, limits.maxCostUsd - usage.costUsd),

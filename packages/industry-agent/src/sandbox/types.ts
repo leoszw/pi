@@ -1,6 +1,12 @@
 import type { JsonObject, RequestContext, ToolDefinition } from "../contracts/index.ts";
 import type { MutationPrepareResult } from "../mutation/types.ts";
-import type { ReportFormat, ReportGenerationResult, ReportCellValue, ReportColumnType, ReportChartType } from "../report/types.ts";
+import type {
+	ReportCellValue,
+	ReportChartType,
+	ReportColumnType,
+	ReportFormat,
+	ReportGenerationResult,
+} from "../report/types.ts";
 
 export interface SandboxScope {
 	tenantId: string;
@@ -97,7 +103,12 @@ export interface SandboxProgram {
 export interface SandboxPlanner {
 	version: string;
 	route(
-		input: { goal: string; context: RequestContext; availableTools: readonly ToolDefinition[]; budget: SandboxBudgetView },
+		input: {
+			goal: string;
+			context: RequestContext;
+			availableTools: readonly ToolDefinition[];
+			budget: SandboxBudgetView;
+		},
 		signal: AbortSignal,
 	): Promise<SandboxRouteDecision>;
 	generate(
@@ -150,13 +161,16 @@ export interface SandboxBrokerResult {
 }
 
 export interface SandboxDataAccessBroker {
-	executeReadOnly(input: {
-		context: RequestContext;
-		schema: SandboxSchemaSnapshot;
-		query: SandboxSqlQuery;
-		maxRows: number;
-		timeoutMs: number;
-	}, signal: AbortSignal): Promise<SandboxBrokerResult>;
+	executeReadOnly(
+		input: {
+			context: RequestContext;
+			schema: SandboxSchemaSnapshot;
+			query: SandboxSqlQuery;
+			maxRows: number;
+			timeoutMs: number;
+		},
+		signal: AbortSignal,
+	): Promise<SandboxBrokerResult>;
 }
 
 export interface SandboxReadableDataset {
@@ -259,18 +273,24 @@ export type SandboxVerificationDecision =
 
 export interface SandboxVerifier {
 	version: string;
-	verify(input: {
-		goal: string;
-		context: RequestContext;
-		program: SandboxProgram;
-		output: SandboxExecutionOutput;
-		readQueryIds: readonly string[];
-		budget: SandboxBudgetView;
-	}, signal: AbortSignal): Promise<SandboxVerificationDecision>;
+	verify(
+		input: {
+			goal: string;
+			context: RequestContext;
+			program: SandboxProgram;
+			output: SandboxExecutionOutput;
+			readQueryIds: readonly string[];
+			budget: SandboxBudgetView;
+		},
+		signal: AbortSignal,
+	): Promise<SandboxVerificationDecision>;
 }
 
 export interface SandboxMutationPreparer {
-	prepare(input: { context: RequestContext; recommendation: SandboxMutationRecommendation }): Promise<MutationPrepareResult>;
+	prepare(input: {
+		context: RequestContext;
+		recommendation: SandboxMutationRecommendation;
+	}): Promise<MutationPrepareResult>;
 }
 
 export interface SandboxReportBuilderInput {
@@ -351,46 +371,46 @@ export interface SandboxGoal {
 
 export type SandboxRunResult =
 	| {
-		status: "TOOLS_SUFFICIENT";
-		runId: string;
-		toolActions: readonly SandboxToolAction[];
-		usage: SandboxUsage;
-		usageAccountingComplete: true;
-	}
+			status: "TOOLS_SUFFICIENT";
+			runId: string;
+			toolActions: readonly SandboxToolAction[];
+			usage: SandboxUsage;
+			usageAccountingComplete: true;
+	  }
 	| {
-		status: "USER_INPUT_REQUIRED";
-		runId: string;
-		question: string;
-		usage: SandboxUsage;
-		usageAccountingComplete: true;
-	}
+			status: "USER_INPUT_REQUIRED";
+			runId: string;
+			question: string;
+			usage: SandboxUsage;
+			usageAccountingComplete: true;
+	  }
 	| {
-		status: "FAILED";
-		runId: string;
-		reason: string;
-		usage: SandboxUsage;
-		usageAccountingComplete: true;
-	}
+			status: "FAILED";
+			runId: string;
+			reason: string;
+			usage: SandboxUsage;
+			usageAccountingComplete: true;
+	  }
 	| {
-		status: "REPORT_READY";
-		runId: string;
-		summary: string;
-		report: ReportGenerationResult;
-		readQueryIds: readonly string[];
-		runtimeVersion: string;
-		usage: SandboxUsage;
-		usageAccountingComplete: true;
-	}
+			status: "REPORT_READY";
+			runId: string;
+			summary: string;
+			report: ReportGenerationResult;
+			readQueryIds: readonly string[];
+			runtimeVersion: string;
+			usage: SandboxUsage;
+			usageAccountingComplete: true;
+	  }
 	| {
-		status: "MUTATION_CONFIRMATION_REQUIRED";
-		runId: string;
-		summary: string;
-		mutationPrepare: MutationPrepareResult;
-		readQueryIds: readonly string[];
-		runtimeVersion: string;
-		usage: SandboxUsage;
-		usageAccountingComplete: true;
-	};
+			status: "MUTATION_CONFIRMATION_REQUIRED";
+			runId: string;
+			summary: string;
+			mutationPrepare: MutationPrepareResult;
+			readQueryIds: readonly string[];
+			runtimeVersion: string;
+			usage: SandboxUsage;
+			usageAccountingComplete: true;
+	  };
 
 export interface SandboxServiceOptions {
 	permissions: SandboxPermissionService;

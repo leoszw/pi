@@ -94,7 +94,10 @@ export interface ProjectDocumentRecord {
 }
 
 export interface ReadDataRepository {
-	getEngineeringPosition(engineeringId: string, scope: ReadToolScope): Promise<EngineeringPositionReadRecord | undefined>;
+	getEngineeringPosition(
+		engineeringId: string,
+		scope: ReadToolScope,
+	): Promise<EngineeringPositionReadRecord | undefined>;
 	getBoqItem(ledgerId: string, scope: ReadToolScope): Promise<BoqItemReadRecord | undefined>;
 	queryQuantity(
 		entityType: QuantityEntityType,

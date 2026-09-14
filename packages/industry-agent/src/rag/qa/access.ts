@@ -11,7 +11,9 @@ export function validateMetadataFilter(input: RagQaMetadataFilter | undefined): 
 	if (!input) return {};
 	const raw = input as Readonly<Record<string, unknown>>;
 	const allowed = new Set(["documentIds", "mimeTypes", "entityIds", "sectionPrefix"]);
-	for (const key of Object.keys(raw)) if (!allowed.has(key)) throw new IndustryAgentError("RAG_QA_INVALID_REQUEST", `Unsupported metadata filter: ${key}`);
+	for (const key of Object.keys(raw))
+		if (!allowed.has(key))
+			throw new IndustryAgentError("RAG_QA_INVALID_REQUEST", `Unsupported metadata filter: ${key}`);
 	const documentIds = normalize(input.documentIds);
 	const mimeTypes = normalize(input.mimeTypes);
 	const entityIds = normalize(input.entityIds);
@@ -24,8 +26,16 @@ export function validateMetadataFilter(input: RagQaMetadataFilter | undefined): 
 	};
 }
 
-export function buildAccessFilter(access: RagQaAccessContext, metadataFilter: RagQaMetadataFilter, aclPolicyVersion: string): RagQaAccessFilter {
-	if (!access.userId || !access.tenantId) throw new IndustryAgentError("RAG_QA_ACCESS_DENIED", "Authenticated RAG QA access context requires userId and tenantId");
+export function buildAccessFilter(
+	access: RagQaAccessContext,
+	metadataFilter: RagQaMetadataFilter,
+	aclPolicyVersion: string,
+): RagQaAccessFilter {
+	if (!access.userId || !access.tenantId)
+		throw new IndustryAgentError(
+			"RAG_QA_ACCESS_DENIED",
+			"Authenticated RAG QA access context requires userId and tenantId",
+		);
 	return {
 		...access,
 		roles: Array.from(new Set(access.roles)).sort(),
@@ -39,11 +49,16 @@ export function buildAccessFilter(access: RagQaAccessContext, metadataFilter: Ra
 function visibilityAllows(scope: RagKnowledgeScope, access: RagQaAccessContext): boolean {
 	if (scope.tenantId !== access.tenantId) return false;
 	switch (scope.visibility) {
-		case "PRIVATE": return scope.ownerUserId === access.userId;
-		case "PROJECT": return scope.projectId !== null && scope.projectId === access.projectId;
-		case "COMPANY": return scope.companyId !== null && scope.companyId === access.companyId;
-		case "INDUSTRY": return scope.industryId !== null && scope.industryId === access.industryId;
-		case "TENANT": return true;
+		case "PRIVATE":
+			return scope.ownerUserId === access.userId;
+		case "PROJECT":
+			return scope.projectId !== null && scope.projectId === access.projectId;
+		case "COMPANY":
+			return scope.companyId !== null && scope.companyId === access.companyId;
+		case "INDUSTRY":
+			return scope.industryId !== null && scope.industryId === access.industryId;
+		case "TENANT":
+			return true;
 	}
 }
 
@@ -70,7 +85,8 @@ function metadataAllows(document: RagDocumentRecord, chunk: RagChunkRecord, filt
 	if (filter.entityIds?.length && !filter.entityIds.some((id) => chunk.entityIds.includes(id))) return false;
 	if (filter.sectionPrefix?.length) {
 		if (chunk.sectionPath.length < filter.sectionPrefix.length) return false;
-		for (let index = 0; index < filter.sectionPrefix.length; index += 1) if (chunk.sectionPath[index] !== filter.sectionPrefix[index]) return false;
+		for (let index = 0; index < filter.sectionPrefix.length; index += 1)
+			if (chunk.sectionPath[index] !== filter.sectionPrefix[index]) return false;
 	}
 	return true;
 }

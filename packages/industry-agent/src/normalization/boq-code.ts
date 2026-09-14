@@ -1,6 +1,7 @@
 import type { NormalizedValue } from "./types.ts";
 
-const BOQ_CODE_PREFIX = /(?:清单(?:项)?(?:编码|编号|号)|BOQ(?:\s*CODE)?|LEDGER(?:\s*CODE)?)\s*[:：#]?\s*([A-Za-z0-9][A-Za-z0-9._－—–-]*)/i;
+const BOQ_CODE_PREFIX =
+	/(?:清单(?:项)?(?:编码|编号|号)|BOQ(?:\s*CODE)?|LEDGER(?:\s*CODE)?)\s*[:：#]?\s*([A-Za-z0-9][A-Za-z0-9._－—–-]*)/i;
 
 export function normalizeBoqCode(value: string): string | undefined {
 	const canonical = value

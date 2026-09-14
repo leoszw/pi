@@ -19,7 +19,12 @@ export function toWorkingMemorySnapshotRecord(state: WorkingMemoryState): Workin
 		tenantId: state.scope.tenantId,
 		userId: state.scope.userId,
 		companyId: state.scope.companyId,
-		projectId: state.activeProject?.value ?? state.lastResultSet?.projectId ?? state.selectedRows?.projectId ?? state.resolvedEntities?.projectId ?? null,
+		projectId:
+			state.activeProject?.value ??
+			state.lastResultSet?.projectId ??
+			state.selectedRows?.projectId ??
+			state.resolvedEntities?.projectId ??
+			null,
 		status: "ACTIVE",
 		content,
 		sourceTraceId: state.lastUpdatedTraceId,

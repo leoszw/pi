@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeLedgerCode, normalizeBoqUnit } from "../src/retrieval/boq/normalizer.ts";
+import { normalizeBoqUnit, normalizeLedgerCode } from "../src/retrieval/boq/normalizer.ts";
 import { extractBoqSpecTokens } from "../src/retrieval/boq/spec-extractor.ts";
 
 describe("BOQ normalization", () => {

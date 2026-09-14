@@ -1,5 +1,56 @@
 import { describe, expect, it } from "vitest";
 import { OpenSearchBoqIndexWriter } from "../src/retrieval/boq/opensearch-index-writer.ts";
 import type { BoqSearchDocument } from "../src/retrieval/boq/types.ts";
-const doc={ledgerId:"1",projectId:"p",ledgerCodeRaw:"403",ledgerCodeNorm:"403",codeSegments:["403"],ancestorCodes:[],existingAncestorCodes:[],missingAncestorCodes:[],hierarchyGap:false,depth:1,hasChildren:false,isLeaf:true,ledgerNameRaw:"钢筋",ledgerNameNorm:"钢筋",pathNames:["钢筋"],pathText:"钢筋",specTokens:[],specFamilies:[],aliasTerms:[],searchText:"钢筋",embeddingItemText:"",embeddingContextText:"",rerankText:"",embeddingVersion:"v",normalizerVersion:"v",aliasVersion:"v",specPatternVersion:"v",embeddingInputHash:"h",indexVersion:"v",isDeleted:false,itemVector:[0],contextVector:[0]} satisfies BoqSearchDocument;
-describe("OpenSearch BOQ writer",()=>{it("preserves vectors through partial update",async()=>{let updated:Readonly<Record<string,unknown>>|undefined; const writer=new OpenSearchBoqIndexWriter({transport:{async index(){},async update(_i,_id,d){updated=d},async delete(){}},indexName:"idx"}); await writer.upsert(doc,{preserveExistingVectors:true}); expect(JSON.stringify(updated)).toContain("doc"); expect(JSON.stringify(updated).includes("item_vector")).toBe(false);});});
+
+const doc = {
+	ledgerId: "1",
+	projectId: "p",
+	ledgerCodeRaw: "403",
+	ledgerCodeNorm: "403",
+	codeSegments: ["403"],
+	ancestorCodes: [],
+	existingAncestorCodes: [],
+	missingAncestorCodes: [],
+	hierarchyGap: false,
+	depth: 1,
+	hasChildren: false,
+	isLeaf: true,
+	ledgerNameRaw: "钢筋",
+	ledgerNameNorm: "钢筋",
+	pathNames: ["钢筋"],
+	pathText: "钢筋",
+	specTokens: [],
+	specFamilies: [],
+	aliasTerms: [],
+	searchText: "钢筋",
+	embeddingItemText: "",
+	embeddingContextText: "",
+	rerankText: "",
+	embeddingVersion: "v",
+	normalizerVersion: "v",
+	aliasVersion: "v",
+	specPatternVersion: "v",
+	embeddingInputHash: "h",
+	indexVersion: "v",
+	isDeleted: false,
+	itemVector: [0],
+	contextVector: [0],
+} satisfies BoqSearchDocument;
+describe("OpenSearch BOQ writer", () => {
+	it("preserves vectors through partial update", async () => {
+		let updated: Readonly<Record<string, unknown>> | undefined;
+		const writer = new OpenSearchBoqIndexWriter({
+			transport: {
+				async index() {},
+				async update(_i, _id, d) {
+					updated = d;
+				},
+				async delete() {},
+			},
+			indexName: "idx",
+		});
+		await writer.upsert(doc, { preserveExistingVectors: true });
+		expect(JSON.stringify(updated)).toContain("doc");
+		expect(JSON.stringify(updated).includes("item_vector")).toBe(false);
+	});
+});

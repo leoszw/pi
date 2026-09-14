@@ -150,10 +150,16 @@ export interface RagPermissionInput {
 	scope: RagKnowledgeScope;
 	permission: "knowledge.ingest";
 }
-export interface RagPermissionService { authorize(input: RagPermissionInput): Promise<boolean>; }
+export interface RagPermissionService {
+	authorize(input: RagPermissionInput): Promise<boolean>;
+}
 
 export interface RagObjectStorage {
-	putIfAbsent(key: string, content: Uint8Array, metadata: JsonObject): Promise<{ storageKey: string; reused: boolean }>;
+	putIfAbsent(
+		key: string,
+		content: Uint8Array,
+		metadata: JsonObject,
+	): Promise<{ storageKey: string; reused: boolean }>;
 }
 
 export interface RagParser {
@@ -161,15 +167,23 @@ export interface RagParser {
 	supports(mimeType: string, fileName: string): boolean;
 	parse(file: RagUploadFile): Promise<RagParsedDocument>;
 }
-export interface RagParserRouter { resolve(mimeType: string, fileName: string): RagParser | undefined; }
-export interface RagVisionExtractor { readonly version: string; extract(file: RagUploadFile, parsed: RagParsedDocument): Promise<RagVisionResult>; }
+export interface RagParserRouter {
+	resolve(mimeType: string, fileName: string): RagParser | undefined;
+}
+export interface RagVisionExtractor {
+	readonly version: string;
+	extract(file: RagUploadFile, parsed: RagParsedDocument): Promise<RagVisionResult>;
+}
 
 export interface RagTokenWindow {
 	count(text: string): number;
 	split(text: string, maxTokens: number, overlapTokens: number): readonly string[];
 }
 
-export interface RagChunkerConfig { maxSectionTokens: number; overlapTokens: number; }
+export interface RagChunkerConfig {
+	maxSectionTokens: number;
+	overlapTokens: number;
+}
 export interface RagChunker {
 	readonly version: string;
 	chunk(documentId: string, blocks: readonly RagExtractedBlock[]): readonly RagChunkDraft[];
@@ -187,13 +201,20 @@ export interface RagEmbeddingProvider {
 
 export interface RagLexicalIndex {
 	readonly version: string;
-	stage(document: RagDocumentRecord, chunks: readonly RagChunkRecord[]): Promise<{ indexedChunkIds: readonly string[] }>;
+	stage(
+		document: RagDocumentRecord,
+		chunks: readonly RagChunkRecord[],
+	): Promise<{ indexedChunkIds: readonly string[] }>;
 	activate(documentId: string): Promise<void>;
 	remove(documentId: string): Promise<void>;
 }
 export interface RagVectorIndex {
 	readonly version: string;
-	stage(document: RagDocumentRecord, chunks: readonly RagChunkRecord[], vectors: readonly (readonly number[])[]): Promise<{ indexedChunkIds: readonly string[] }>;
+	stage(
+		document: RagDocumentRecord,
+		chunks: readonly RagChunkRecord[],
+		vectors: readonly (readonly number[])[],
+	): Promise<{ indexedChunkIds: readonly string[] }>;
 	activate(documentId: string): Promise<void>;
 	remove(documentId: string): Promise<void>;
 }
@@ -206,7 +227,9 @@ export interface RagQualityInput {
 	vectorIndexedIds: readonly string[];
 	expectedEmbeddingDimension: number;
 }
-export interface RagQualityValidator { validate(input: RagQualityInput): void; }
+export interface RagQualityValidator {
+	validate(input: RagQualityInput): void;
+}
 
 export interface RagDocumentRepository {
 	create(document: RagDocumentRecord): Promise<void>;
@@ -220,7 +243,14 @@ export interface RagChunkRepository {
 }
 
 export interface RagIngestionTraceSink {
-	record(event: { traceId: string; requestId: string; documentId: string; stage: RagDocumentStatus; status: "START" | "OK" | "ERROR"; details?: JsonObject }): void;
+	record(event: {
+		traceId: string;
+		requestId: string;
+		documentId: string;
+		stage: RagDocumentStatus;
+		status: "START" | "OK" | "ERROR";
+		details?: JsonObject;
+	}): void;
 }
 
 export interface RagIngestionServiceOptions {

@@ -9,27 +9,44 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isUiAction(value: unknown): value is UIAction {
-	return isRecord(value) && typeof value["id"] === "string" && typeof value["type"] === "string" && isRecord(value["payload"]);
+	return isRecord(value) && typeof value.id === "string" && typeof value.type === "string" && isRecord(value.payload);
 }
 
 function isProposal(value: unknown): value is MutationProposalRecord {
-	return isRecord(value)
-		&& typeof value["operationId"] === "string"
-		&& typeof value["digest"] === "string"
-		&& value["status"] === "PREPARED"
-		&& typeof value["entityType"] === "string";
+	return (
+		isRecord(value) &&
+		typeof value.operationId === "string" &&
+		typeof value.digest === "string" &&
+		value.status === "PREPARED" &&
+		typeof value.entityType === "string"
+	);
 }
 
 function isMutationPrepareResult(value: unknown): value is MutationPrepareResult {
-	return isRecord(value) && isProposal(value["proposal"]) && Array.isArray(value["uiActions"]) && value["uiActions"].every(isUiAction);
+	return (
+		isRecord(value) &&
+		isProposal(value.proposal) &&
+		Array.isArray(value.uiActions) &&
+		value.uiActions.every(isUiAction)
+	);
 }
 
 function mapRecommendation(recommendation: SandboxMutationRecommendation): { toolName: string; args: JsonObject } {
 	if (recommendation.operation === "CREATE") {
-		return { toolName: "prepare_create", args: { entityType: recommendation.entityType, values: recommendation.values } };
+		return {
+			toolName: "prepare_create",
+			args: { entityType: recommendation.entityType, values: recommendation.values },
+		};
 	}
 	if (recommendation.operation === "UPDATE") {
-		return { toolName: "prepare_update", args: { entityType: recommendation.entityType, entityIds: [...recommendation.targetEntityIds], patch: recommendation.values } };
+		return {
+			toolName: "prepare_update",
+			args: {
+				entityType: recommendation.entityType,
+				entityIds: [...recommendation.targetEntityIds],
+				patch: recommendation.values,
+			},
+		};
 	}
 	return {
 		toolName: "prepare_delete",
@@ -60,8 +77,16 @@ export class MutationToolSandboxPreparer implements SandboxMutationPreparer {
 			context: input.context,
 		};
 		const result = await this.runtime.execute(invocation);
-		if (!result.ok) throw new IndustryAgentError("SANDBOX_MUTATION_PREPARE_FAILED", `Mutation prepare failed: ${result.error?.code ?? "unknown"}: ${result.error?.message ?? "unknown"}`);
-		if (!isMutationPrepareResult(result.data)) throw new IndustryAgentError("SANDBOX_MUTATION_PREPARE_FAILED", "Mutation prepare returned an invalid result shape");
+		if (!result.ok)
+			throw new IndustryAgentError(
+				"SANDBOX_MUTATION_PREPARE_FAILED",
+				`Mutation prepare failed: ${result.error?.code ?? "unknown"}: ${result.error?.message ?? "unknown"}`,
+			);
+		if (!isMutationPrepareResult(result.data))
+			throw new IndustryAgentError(
+				"SANDBOX_MUTATION_PREPARE_FAILED",
+				"Mutation prepare returned an invalid result shape",
+			);
 		return result.data;
 	}
 }

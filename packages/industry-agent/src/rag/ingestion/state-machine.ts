@@ -18,5 +18,6 @@ const NEXT: Readonly<Record<RagDocumentStatus, readonly RagDocumentStatus[]>> = 
 };
 
 export function assertRagTransition(from: RagDocumentStatus, to: RagDocumentStatus): void {
-	if (!NEXT[from].includes(to)) throw new IndustryAgentError("RAG_STATE_INVALID", `Invalid RAG ingestion transition: ${from} -> ${to}`);
+	if (!NEXT[from].includes(to))
+		throw new IndustryAgentError("RAG_STATE_INVALID", `Invalid RAG ingestion transition: ${from} -> ${to}`);
 }

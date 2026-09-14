@@ -12,8 +12,12 @@ export interface BuildBoqDocumentInput {
 	config: BoqRetrievalConfig;
 }
 
-function specSummary(tokens: readonly string[]): string { return tokens.join(" "); }
-function compact(parts: readonly (string | undefined)[]): string { return parts.filter((part): part is string => Boolean(part?.trim())).join("；"); }
+function specSummary(tokens: readonly string[]): string {
+	return tokens.join(" ");
+}
+function compact(parts: readonly (string | undefined)[]): string {
+	return parts.filter((part): part is string => Boolean(part?.trim())).join("；");
+}
 
 export function buildBoqSearchDocument(input: BuildBoqDocumentInput): BoqSearchDocument {
 	const { row, hierarchy, aliases, config } = input;
@@ -48,7 +52,17 @@ export function buildBoqSearchDocument(input: BuildBoqDocumentInput): BoqSearchD
 		unit ? `单位：${unit}` : undefined,
 	]);
 	const embeddingInputHash = createHash("sha256")
-		.update([embeddingItemText, embeddingContextText, config.embeddingModel, config.embeddingVersion, config.normalizerVersion, config.aliasVersion, config.specPatternVersion].join("\n"))
+		.update(
+			[
+				embeddingItemText,
+				embeddingContextText,
+				config.embeddingModel,
+				config.embeddingVersion,
+				config.normalizerVersion,
+				config.aliasVersion,
+				config.specPatternVersion,
+			].join("\n"),
+		)
 		.digest("hex");
 	return {
 		ledgerId: row.ledgerId,

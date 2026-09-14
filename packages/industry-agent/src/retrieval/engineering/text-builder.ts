@@ -5,7 +5,6 @@ import type { EngineeringAlignmentSide, EngineeringLocalSide, EngineeringSearchD
 
 const SYNONYMS: Readonly<Record<string, string>> = {
 	砼: "混凝土",
-
 };
 
 function normalizeUnicode(value: string): string {
@@ -23,7 +22,7 @@ export function stripEngineeringChainage(value: string): string {
 		.replace(/(?:[A-Za-z]{0,4}K)?\s*\d+\s*\+\s*\d+(?:\.\d+)?/gi, " ")
 		.replace(/\s+/g, " ")
 		.trim()
-		.replace(/^[\-~至到\s]+|[\-~至到\s]+$/g, "");
+		.replace(/^[-~至到\s]+|[-~至到\s]+$/g, "");
 }
 
 export function normalizeEngineeringSemanticText(value: string): string {
@@ -50,7 +49,8 @@ export function deriveEngineeringLocalSide(value: string): EngineeringLocalSide 
 }
 
 export function extractEngineeringPositionTokens(value: string): string[] {
-	const normalized = normalizeUnicode(value).replace(/([0-9]+)\s*(?:号|#)\s*台/g, "$1#桥台")
+	const normalized = normalizeUnicode(value)
+		.replace(/([0-9]+)\s*(?:号|#)\s*台/g, "$1#桥台")
 		.replace(/([0-9]+)\s*号\s*墩/g, "$1#墩");
 	const patterns = [
 		/\d+(?:-\d+)?#(?:桥台|墩|盖梁|承台|墩柱|钻孔灌注桩)/g,
@@ -69,7 +69,7 @@ function sideLabel(side: EngineeringAlignmentSide): string {
 }
 
 function compact(parts: readonly (string | undefined)[]): string {
-	return parts.filter((value): value is string => Boolean(value && value.trim())).join("；");
+	return parts.filter((value): value is string => Boolean(value?.trim())).join("；");
 }
 
 export interface BuildEngineeringSearchDocumentInput {
@@ -83,12 +83,16 @@ export interface BuildEngineeringSearchDocumentInput {
 export function buildEngineeringSearchDocument(input: BuildEngineeringSearchDocumentInput): EngineeringSearchDocument {
 	const { row, hierarchy } = input;
 	const pathNames = hierarchy.names;
-	const alignmentSide = deriveEngineeringAlignmentSide(`${row.unitEngineeringName ?? ""} ${row.engineeringFullName ?? ""} ${row.engineeringName}`);
+	const alignmentSide = deriveEngineeringAlignmentSide(
+		`${row.unitEngineeringName ?? ""} ${row.engineeringFullName ?? ""} ${row.engineeringName}`,
+	);
 	const localSide = deriveEngineeringLocalSide(row.engineeringName);
 	const positionTokens = extractEngineeringPositionTokens(`${row.engineeringName} ${row.engineeringFullName ?? ""}`);
 	const semanticName = normalizeEngineeringSemanticText(row.engineeringName);
 	const semanticPath = pathNames.map(normalizeEngineeringSemanticText).filter(Boolean).join(" > ");
-	const aliasTerms = Array.from(new Set((input.aliases ?? []).map(normalizeEngineeringSemanticText).filter(Boolean))).sort();
+	const aliasTerms = Array.from(
+		new Set((input.aliases ?? []).map(normalizeEngineeringSemanticText).filter(Boolean)),
+	).sort();
 	const pathText = pathNames.join(" > ");
 	const searchText = compact([
 		row.engineeringFullName,
@@ -115,9 +119,10 @@ export function buildEngineeringSearchDocument(input: BuildEngineeringSearchDocu
 		alignmentLabel ? `方向：${alignmentLabel}` : undefined,
 		row.alignmentCode ? `线路：${row.alignmentCode}` : undefined,
 	]);
-	const chainageLabel = row.chainageStartM === undefined || row.chainageEndM === undefined
-		? undefined
-		: `桩号区间：${row.chainageStartM}-${row.chainageEndM}米`;
+	const chainageLabel =
+		row.chainageStartM === undefined || row.chainageEndM === undefined
+			? undefined
+			: `桩号区间：${row.chainageStartM}-${row.chainageEndM}米`;
 	const rerankText = compact([
 		row.unitEngineeringName ? `单位工程：${row.unitEngineeringName}` : undefined,
 		pathText ? `路径：${pathText}` : undefined,

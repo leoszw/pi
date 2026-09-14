@@ -1,6 +1,8 @@
 import type { BoqBenchmarkMetrics, BoqBenchmarkObservation } from "./types.ts";
 
-function ratio(numerator: number, denominator: number): number { return denominator > 0 ? numerator / denominator : 0; }
+function ratio(numerator: number, denominator: number): number {
+	return denominator > 0 ? numerator / denominator : 0;
+}
 function percentile(values: readonly number[], p: number): number {
 	if (values.length === 0) return 0;
 	const sorted = [...values].sort((a, b) => a - b);
@@ -29,15 +31,27 @@ export function calculateBoqBenchmarkMetrics(observations: readonly BoqBenchmark
 	}
 	return {
 		queryCount: observations.length,
-		codeExactAccuracy: ratio(codeCases.filter((o) => o.rankedLedgerIds[0] && o.expectedLedgerIds.includes(o.rankedLedgerIds[0])).length, codeCases.length),
-		hierarchyAccuracy: ratio(hierarchyCases.filter((o) => o.rankedLedgerIds.length >= (o.hierarchyExpectedCount ?? 0)).length, hierarchyCases.length),
+		codeExactAccuracy: ratio(
+			codeCases.filter((o) => o.rankedLedgerIds[0] && o.expectedLedgerIds.includes(o.rankedLedgerIds[0])).length,
+			codeCases.length,
+		),
+		hierarchyAccuracy: ratio(
+			hierarchyCases.filter((o) => o.rankedLedgerIds.length >= (o.hierarchyExpectedCount ?? 0)).length,
+			hierarchyCases.length,
+		),
 		recallAt10: ratio(recall10, observations.length),
 		hitAt1: ratio(hit1, observations.length),
 		mrr: ratio(mrr, observations.length),
 		specConflictTop1Rate: ratio(observations.filter((o) => o.criticalSpecConflictTop1).length, observations.length),
 		ambiguityPrecision: ratio(autoAcceptCases.filter((o) => o.autoAcceptCorrect).length, autoAcceptCases.length),
 		zeroResultRate: ratio(zero, observations.length),
-		p50LatencyMs: percentile(observations.map((o) => o.latencyMs), 0.50),
-		p95LatencyMs: percentile(observations.map((o) => o.latencyMs), 0.95),
+		p50LatencyMs: percentile(
+			observations.map((o) => o.latencyMs),
+			0.5,
+		),
+		p95LatencyMs: percentile(
+			observations.map((o) => o.latencyMs),
+			0.95,
+		),
 	};
 }

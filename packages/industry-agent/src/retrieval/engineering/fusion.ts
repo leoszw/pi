@@ -50,5 +50,7 @@ export function weightedRrf(
 
 export function normalizeFusionScores(candidates: readonly EngineeringFusedCandidate[]): Map<string, number> {
 	const max = Math.max(0, ...candidates.map((candidate) => candidate.fusionScore));
-	return new Map(candidates.map((candidate) => [candidate.document.engineeringId, max > 0 ? candidate.fusionScore / max : 0]));
+	return new Map(
+		candidates.map((candidate) => [candidate.document.engineeringId, max > 0 ? candidate.fusionScore / max : 0]),
+	);
 }

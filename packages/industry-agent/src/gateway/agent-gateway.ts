@@ -6,18 +6,14 @@ import {
 	type TelemetryContext,
 } from "@earendil-works/pi-agent-core";
 import {
-	createRequestContext,
 	type CreateRequestContextInput,
+	createRequestContext,
 	type RequestContextFactoryOptions,
 } from "../context/request-context.ts";
 import type { SemanticContext } from "../context/semantic-context.ts";
 import type { RequestContext, SemanticFrame } from "../contracts/index.ts";
 import { IndustryAgentError } from "../errors/industry-agent-error.ts";
-import {
-	createFallbackSemanticFrame,
-	QueryParser,
-	type SemanticParser,
-} from "../semantic/query-parser.ts";
+import { createFallbackSemanticFrame, QueryParser, type SemanticParser } from "../semantic/query-parser.ts";
 import { TraceCollector, type TraceCollectorOptions } from "../trace/trace-collector.ts";
 
 export interface AgentRuntime {
@@ -109,7 +105,11 @@ export class IndustryAgentGateway {
 			});
 		} catch (cause) {
 			semanticFrame = createFallbackSemanticFrame(request.message);
-			trace?.recordError("SEMANTIC_PARSE_ERROR", "Semantic parsing failed; using fallback frame", semanticParseErrorDetails(cause));
+			trace?.recordError(
+				"SEMANTIC_PARSE_ERROR",
+				"Semantic parsing failed; using fallback frame",
+				semanticParseErrorDetails(cause),
+			);
 		}
 		trace?.recordSemanticFrame(semanticFrame);
 

@@ -1,6 +1,9 @@
 import { structuralAncestorCodes } from "./normalizer.ts";
 
-export interface BoqHierarchySourceItem { code: string; name: string; }
+export interface BoqHierarchySourceItem {
+	code: string;
+	name: string;
+}
 export interface BoqHierarchyInfo {
 	codeSegments: readonly string[];
 	parentCode?: string;
@@ -26,7 +29,10 @@ export function buildBoqHierarchyCatalog(items: readonly BoqHierarchySourceItem[
 		const ancestors = structuralAncestorCodes(item.code);
 		const existing = ancestors.filter((code) => byCode.has(code));
 		const missing = ancestors.filter((code) => !byCode.has(code));
-		const pathNames = [...existing.map((code) => byCode.get(code)?.name).filter((name): name is string => Boolean(name)), item.name];
+		const pathNames = [
+			...existing.map((code) => byCode.get(code)?.name).filter((name): name is string => Boolean(name)),
+			item.name,
+		];
 		output.set(item.code, {
 			codeSegments: item.code.split("-"),
 			...(ancestors.at(-1) ? { parentCode: ancestors.at(-1)! } : {}),

@@ -9,7 +9,8 @@ function withoutProject(input: RequestContext): RequestContext {
 
 describe("working memory project isolation", () => {
 	it("carries server active project when omitted, but blocks explicit project switches", async () => {
-		const memory = service(); const projectOne = context("project-1");
+		const memory = service();
+		const projectOne = context("project-1");
 		await memory.captureResultSet(projectOne, [{ rowId: "r1", entityId: "e1" }], "TOOL_RESULT");
 		const inherited = await memory.resolve(withoutProject(projectOne), "这些");
 		expect(inherited.rowIds).toEqual(["r1"]);
@@ -22,6 +23,8 @@ describe("working memory project isolation", () => {
 
 	it("does not allow memory to override an explicit server project", async () => {
 		const memory = service();
-		await expect(memory.setActiveProject(context("project-1"), "project-2", "USER_EXPLICIT")).rejects.toMatchObject({ code: "MEMORY_SCOPE_MISMATCH" });
+		await expect(memory.setActiveProject(context("project-1"), "project-2", "USER_EXPLICIT")).rejects.toMatchObject({
+			code: "MEMORY_SCOPE_MISMATCH",
+		});
 	});
 });

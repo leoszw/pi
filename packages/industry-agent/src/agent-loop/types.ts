@@ -114,7 +114,11 @@ export interface AgentLoopToolExecutionResult {
 }
 
 export interface AgentLoopToolExecutor {
-	execute(invocation: ToolInvocation, budget: AgentLoopBudgetView, signal: AbortSignal): Promise<AgentLoopToolExecutionResult>;
+	execute(
+		invocation: ToolInvocation,
+		budget: AgentLoopBudgetView,
+		signal: AbortSignal,
+	): Promise<AgentLoopToolExecutionResult>;
 }
 
 export type AgentLoopTraceEventType =

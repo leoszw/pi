@@ -19,11 +19,11 @@ export const BOQ_RETRIEVAL_CONFIG_V1: BoqRetrievalConfig = {
 	rerankK: 50,
 	finalTopK: 10,
 	weights: {
-		SPEC: { exact: 0.30, bm25: 0.25, item: 0.30, context: 0.15 },
-		ITEM_SHORT: { exact: 0.30, bm25: 0.25, item: 0.35, context: 0.10 },
-		CONTEXT: { exact: 0.15, bm25: 0.25, item: 0.20, context: 0.40 },
-		DEFAULT: { exact: 0.20, bm25: 0.30, item: 0.30, context: 0.20 },
+		SPEC: { exact: 0.3, bm25: 0.25, item: 0.3, context: 0.15 },
+		ITEM_SHORT: { exact: 0.3, bm25: 0.25, item: 0.35, context: 0.1 },
+		CONTEXT: { exact: 0.15, bm25: 0.25, item: 0.2, context: 0.4 },
+		DEFAULT: { exact: 0.2, bm25: 0.3, item: 0.3, context: 0.2 },
 	},
-	rankingWeights: { rerank: 0.55, fusion: 0.20, business: 0.25 },
+	rankingWeights: { rerank: 0.55, fusion: 0.2, business: 0.25 },
 	confidence: { autoAcceptRaw: 0.82, maxCriticalSpecConflicts: 0 },
 };

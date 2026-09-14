@@ -3,7 +3,14 @@ import type { TraceRetrievalInput } from "../../trace/types.ts";
 export type BoqOperation = "SEARCH" | "LIST_DESCENDANTS" | "FACT_LOOKUP";
 export type BoqQueryMode = "CODE" | "SPEC" | "ITEM_SHORT" | "CONTEXT" | "DEFAULT";
 export type BoqRetrievalArm = "exact" | "bm25" | "item" | "context";
-export type BoqSpecFamily = "concrete_grade" | "rebar_grade" | "diameter" | "thickness" | "percentage" | "rock_class" | (string & {});
+export type BoqSpecFamily =
+	| "concrete_grade"
+	| "rebar_grade"
+	| "diameter"
+	| "thickness"
+	| "percentage"
+	| "rock_class"
+	| (string & {});
 
 export interface BoqSpecToken {
 	family: BoqSpecFamily;
@@ -108,7 +115,12 @@ export interface BoqRetrievalBackend {
 	listDescendants(query: ParsedBoqQuery, filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]>;
 	searchExact(query: ParsedBoqQuery, filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]>;
 	searchBm25(query: ParsedBoqQuery, filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]>;
-	searchDense(field: "item_vector" | "context_vector", queryVector: readonly number[], filters: BoqSearchFilters, topK: number): Promise<readonly BoqArmHit[]>;
+	searchDense(
+		field: "item_vector" | "context_vector",
+		queryVector: readonly number[],
+		filters: BoqSearchFilters,
+		topK: number,
+	): Promise<readonly BoqArmHit[]>;
 }
 
 export interface BoqEmbeddingProvider {

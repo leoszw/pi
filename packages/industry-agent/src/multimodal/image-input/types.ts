@@ -1,9 +1,23 @@
-import type { EntityCandidate, JsonObject, MutationOperation, RequestContext, ResolvedEntity, UIAction } from "../../contracts/index.ts";
+import type {
+	EntityCandidate,
+	JsonObject,
+	MutationOperation,
+	RequestContext,
+	ResolvedEntity,
+	UIAction,
+} from "../../contracts/index.ts";
 import type { MutationPrepareResult } from "../../mutation/types.ts";
 
 export type ImageObservationKind = "TEXT" | "FIELD" | "OBJECT" | "TABLE" | "MEASUREMENT" | "CHECKBOX" | "DATE";
 export type ImageInputStatus = "NO_ACTION" | "NEEDS_ENTITY_REVIEW" | "NEEDS_FIELDS" | "NEEDS_REVIEW" | "PREPARED";
-export type ImagePipelineStage = "AUTHORIZE" | "VALIDATE" | "STORE" | "UNDERSTAND" | "ENTITY_RESOLVE" | "ACTION_PROPOSE" | "MUTATION_PREPARE";
+export type ImagePipelineStage =
+	| "AUTHORIZE"
+	| "VALIDATE"
+	| "STORE"
+	| "UNDERSTAND"
+	| "ENTITY_RESOLVE"
+	| "ACTION_PROPOSE"
+	| "MUTATION_PREPARE";
 export type ImageTraceStatus = "START" | "OK" | "ERROR" | "BLOCKED";
 export type ImagePrimitive = string | number | boolean | null;
 
@@ -166,10 +180,7 @@ export interface ImageActionPolicyRegistry {
 }
 
 export interface ImageMutationPreparer {
-	prepare(input: {
-		context: RequestContext;
-		proposal: ImageActionProposal;
-	}): Promise<MutationPrepareResult>;
+	prepare(input: { context: RequestContext; proposal: ImageActionProposal }): Promise<MutationPrepareResult>;
 }
 
 export interface ImageInputTraceEvent {

@@ -126,8 +126,16 @@ export interface EngineeringArmHit {
 }
 
 export interface EngineeringRetrievalBackend {
-	searchExact(query: ParsedEngineeringQuery, filters: EngineeringSearchFilters, topK: number): Promise<readonly EngineeringArmHit[]>;
-	searchBm25(query: ParsedEngineeringQuery, filters: EngineeringSearchFilters, topK: number): Promise<readonly EngineeringArmHit[]>;
+	searchExact(
+		query: ParsedEngineeringQuery,
+		filters: EngineeringSearchFilters,
+		topK: number,
+	): Promise<readonly EngineeringArmHit[]>;
+	searchBm25(
+		query: ParsedEngineeringQuery,
+		filters: EngineeringSearchFilters,
+		topK: number,
+	): Promise<readonly EngineeringArmHit[]>;
 	searchDense(
 		field: "name_vector" | "context_vector",
 		queryVector: readonly number[],

@@ -1,5 +1,11 @@
 import type { RequestContext } from "../contracts/index.ts";
-import type { ReportEvidence, ReportGenerationRequest, ReportGenerationResult, ReportModel, ReportScope } from "../report/types.ts";
+import type {
+	ReportEvidence,
+	ReportGenerationRequest,
+	ReportGenerationResult,
+	ReportModel,
+	ReportScope,
+} from "../report/types.ts";
 import type { SandboxBrokerResult, SandboxReportBuilder, SandboxReportBuilderInput } from "./types.ts";
 
 export interface SandboxReportGenerator {
@@ -14,7 +20,10 @@ function brokerEvidenceId(queryId: string, evidenceId: string): string {
 	return `broker:${queryId}:${evidenceId}`;
 }
 
-function parentEvidenceIds(queryIds: readonly string[], results: ReadonlyMap<string, SandboxBrokerResult>): readonly string[] {
+function parentEvidenceIds(
+	queryIds: readonly string[],
+	results: ReadonlyMap<string, SandboxBrokerResult>,
+): readonly string[] {
 	const ids = new Set<string>();
 	for (const queryId of queryIds) {
 		const result = results.get(queryId);
@@ -59,7 +68,14 @@ export class SandboxReportServiceBuilder implements SandboxReportBuilder {
 				sourceVersion: input.runtimeVersion,
 				parentEvidenceIds: parents,
 			});
-			return { datasetId: table.tableId, name: table.name, scope: reportScope, columns: table.columns, rows: table.rows, evidenceIds: [derivedId] };
+			return {
+				datasetId: table.tableId,
+				name: table.name,
+				scope: reportScope,
+				columns: table.columns,
+				rows: table.rows,
+				evidenceIds: [derivedId],
+			};
 		});
 
 		const datasetEvidence = new Map(datasets.map((dataset) => [dataset.datasetId, dataset.evidenceIds] as const));
@@ -84,7 +100,12 @@ export class SandboxReportServiceBuilder implements SandboxReportBuilder {
 				sourceVersion: input.runtimeVersion,
 				parentEvidenceIds: parents,
 			});
-			return { sectionId: section.sectionId, heading: section.heading, body: section.body, evidenceIds: [derivedId] };
+			return {
+				sectionId: section.sectionId,
+				heading: section.heading,
+				body: section.body,
+				evidenceIds: [derivedId],
+			};
 		});
 
 		const allQueryIds = input.brokerResults.map((result) => result.queryId);
@@ -99,7 +120,12 @@ export class SandboxReportServiceBuilder implements SandboxReportBuilder {
 				sourceVersion: input.runtimeVersion,
 				parentEvidenceIds: summaryParents,
 			});
-			narrative.push({ sectionId: "sandbox-verification", heading: "Analysis Summary", body: input.verificationSummary, evidenceIds: [summaryId] });
+			narrative.push({
+				sectionId: "sandbox-verification",
+				heading: "Analysis Summary",
+				body: input.verificationSummary,
+				evidenceIds: [summaryId],
+			});
 		}
 
 		const model: ReportModel = {
@@ -109,7 +135,11 @@ export class SandboxReportServiceBuilder implements SandboxReportBuilder {
 			charts,
 			narrative,
 			evidence,
-			metadata: { sandboxProgramId: input.program.programId, sandboxRuntimeVersion: input.runtimeVersion, queryIds: allQueryIds },
+			metadata: {
+				sandboxProgramId: input.program.programId,
+				sandboxRuntimeVersion: input.runtimeVersion,
+				queryIds: allQueryIds,
+			},
 		};
 		return this.generator.generate({ context: input.context, formats: input.formats, model });
 	}

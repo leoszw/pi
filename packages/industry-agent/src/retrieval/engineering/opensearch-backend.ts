@@ -25,7 +25,8 @@ function filterClauses(filters: EngineeringSearchFilters): readonly Readonly<Rec
 	if (filters.unitEngineeringId) clauses.push({ term: { unit_engineering_id: filters.unitEngineeringId } });
 	if (filters.alignmentCode) clauses.push({ term: { alignment_code: filters.alignmentCode } });
 	if (filters.alignmentSide) clauses.push({ term: { alignment_side: filters.alignmentSide } });
-	if (filters.engineeringCategoryName) clauses.push({ term: { engineering_category_name: filters.engineeringCategoryName } });
+	if (filters.engineeringCategoryName)
+		clauses.push({ term: { engineering_category_name: filters.engineeringCategoryName } });
 	if (filters.engineeringTypeName) clauses.push({ term: { engineering_type_name: filters.engineeringTypeName } });
 	if (filters.leafOnly !== undefined) clauses.push({ term: { is_min_unit: filters.leafOnly } });
 	if (filters.chainageStartM !== undefined && filters.chainageEndM !== undefined) {
@@ -75,13 +76,21 @@ export function buildEngineeringBm25Query(
 		query: {
 			bool: {
 				filter: filterClauses(filters),
-				must: [{
-					multi_match: {
-						query: query.semanticQuery || query.rawQuery,
-						type: "best_fields",
-						fields: ["engineering_name^6", "engineering_full_name^4", "unit_engineering_name^3", "path_text^3", "search_text^1"],
+				must: [
+					{
+						multi_match: {
+							query: query.semanticQuery || query.rawQuery,
+							type: "best_fields",
+							fields: [
+								"engineering_name^6",
+								"engineering_full_name^4",
+								"unit_engineering_name^3",
+								"path_text^3",
+								"search_text^1",
+							],
+						},
 					},
-				}],
+				],
 			},
 		},
 	};
@@ -108,7 +117,9 @@ export function buildEngineeringKnnQuery(
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {
-	return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+	return value !== null && typeof value === "object" && !Array.isArray(value)
+		? (value as Record<string, unknown>)
+		: undefined;
 }
 
 function stringValue(value: unknown): string | undefined {
@@ -132,7 +143,10 @@ function sourceToDocument(source: Record<string, unknown>): EngineeringSearchDoc
 	const projectId = stringValue(source.pro_id);
 	const engineeringName = stringValue(source.engineering_name);
 	if (!engineeringId || !projectId || !engineeringName) {
-		throw new IndustryAgentError("RETRIEVAL_ERROR", "OpenSearch engineering hit is missing required string identity fields");
+		throw new IndustryAgentError(
+			"RETRIEVAL_ERROR",
+			"OpenSearch engineering hit is missing required string identity fields",
+		);
 	}
 	return {
 		engineeringId,
@@ -209,12 +223,26 @@ export class OpenSearchEngineeringRetrievalBackend implements EngineeringRetriev
 		this.indexName = options.indexName;
 	}
 
-	async searchExact(query: ParsedEngineeringQuery, filters: EngineeringSearchFilters, topK: number): Promise<readonly EngineeringArmHit[]> {
-		return parseHits(await this.transport.search(this.indexName, buildEngineeringExactQuery(query, filters, topK)), true);
+	async searchExact(
+		query: ParsedEngineeringQuery,
+		filters: EngineeringSearchFilters,
+		topK: number,
+	): Promise<readonly EngineeringArmHit[]> {
+		return parseHits(
+			await this.transport.search(this.indexName, buildEngineeringExactQuery(query, filters, topK)),
+			true,
+		);
 	}
 
-	async searchBm25(query: ParsedEngineeringQuery, filters: EngineeringSearchFilters, topK: number): Promise<readonly EngineeringArmHit[]> {
-		return parseHits(await this.transport.search(this.indexName, buildEngineeringBm25Query(query, filters, topK)), false);
+	async searchBm25(
+		query: ParsedEngineeringQuery,
+		filters: EngineeringSearchFilters,
+		topK: number,
+	): Promise<readonly EngineeringArmHit[]> {
+		return parseHits(
+			await this.transport.search(this.indexName, buildEngineeringBm25Query(query, filters, topK)),
+			false,
+		);
 	}
 
 	async searchDense(
@@ -223,6 +251,9 @@ export class OpenSearchEngineeringRetrievalBackend implements EngineeringRetriev
 		filters: EngineeringSearchFilters,
 		topK: number,
 	): Promise<readonly EngineeringArmHit[]> {
-		return parseHits(await this.transport.search(this.indexName, buildEngineeringKnnQuery(field, queryVector, filters, topK)), false);
+		return parseHits(
+			await this.transport.search(this.indexName, buildEngineeringKnnQuery(field, queryVector, filters, topK)),
+			false,
+		);
 	}
 }

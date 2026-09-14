@@ -1,7 +1,72 @@
 import { describe, expect, it } from "vitest";
 import type { RequestContext } from "../src/contracts/index.ts";
 import { HmacApprovalTokenService } from "../src/mutation/approval-token.ts";
-import { AllowAllMutationBusinessValidator, InMemoryMutationAuditSink, InMemoryMutationPermissionService, InMemoryMutationPolicyRegistry, InMemoryMutationProposalRepository, InMemoryMutationStore, InMemoryMutationTraceSink } from "../src/mutation/in-memory.ts";
+import {
+	AllowAllMutationBusinessValidator,
+	InMemoryMutationAuditSink,
+	InMemoryMutationPermissionService,
+	InMemoryMutationPolicyRegistry,
+	InMemoryMutationProposalRepository,
+	InMemoryMutationStore,
+	InMemoryMutationTraceSink,
+} from "../src/mutation/in-memory.ts";
 import { MutationRuntime } from "../src/mutation/runtime.ts";
-const scope={userId:"u",tenantId:"t",companyId:"c",projectId:"p"};const ctx:RequestContext={traceId:"tr",requestId:"rq",conversationId:"cv",...scope,createdAt:"2026-09-12T00:00:00Z"};
-describe("mutation audit",()=>{it("records prepared approved commit-started committed and trace stages",async()=>{let n=0;const store=new InMemoryMutationStore();const permissions=new InMemoryMutationPermissionService();for(const p of ["mutation.prepare","mutation.commit","x.create"])permissions.grant(scope,p);const audit=new InMemoryMutationAuditSink();const trace=new InMemoryMutationTraceSink();const runtime=new MutationRuntime({policies:new InMemoryMutationPolicyRegistry([{entityType:"X",createPermission:"x.create",updatePermission:"x.update",deletePermission:"x.delete",softDelete:true}]),permissions,validator:new AllowAllMutationBusinessValidator(),readRepository:store,writeGateway:store,proposals:new InMemoryMutationProposalRepository(),approvals:store,approvalTokens:new HmacApprovalTokenService("0123456789abcdef0123456789abcdef"),audit,trace,idFactory:()=>`z${++n}`,now:()=>new Date("2026-09-12T00:00:00Z")});const prepared=await runtime.execute({toolCallId:"1",toolName:"prepare_create",toolVersion:"1.0.0",args:{entityType:"X",values:{name:"N"}},context:ctx});const op=(prepared.data as {proposal:{operationId:string}}).proposal.operationId;const approval=await runtime.approve(op,ctx,true);await runtime.execute({toolCallId:"2",toolName:"commit_mutation",toolVersion:"1.0.0",args:{operationId:op,approvalToken:approval.approvalToken},context:ctx});expect(audit.events.map((e)=>e.eventType)).toEqual(["PREPARED","APPROVED","COMMIT_STARTED","COMMITTED"]);expect(trace.events.some((e)=>e.stage==="committed")).toBe(true);});});
+
+const scope = { userId: "u", tenantId: "t", companyId: "c", projectId: "p" };
+const ctx: RequestContext = {
+	traceId: "tr",
+	requestId: "rq",
+	conversationId: "cv",
+	...scope,
+	createdAt: "2026-09-12T00:00:00Z",
+};
+describe("mutation audit", () => {
+	it("records prepared approved commit-started committed and trace stages", async () => {
+		let n = 0;
+		const store = new InMemoryMutationStore();
+		const permissions = new InMemoryMutationPermissionService();
+		for (const p of ["mutation.prepare", "mutation.commit", "x.create"]) permissions.grant(scope, p);
+		const audit = new InMemoryMutationAuditSink();
+		const trace = new InMemoryMutationTraceSink();
+		const runtime = new MutationRuntime({
+			policies: new InMemoryMutationPolicyRegistry([
+				{
+					entityType: "X",
+					createPermission: "x.create",
+					updatePermission: "x.update",
+					deletePermission: "x.delete",
+					softDelete: true,
+				},
+			]),
+			permissions,
+			validator: new AllowAllMutationBusinessValidator(),
+			readRepository: store,
+			writeGateway: store,
+			proposals: new InMemoryMutationProposalRepository(),
+			approvals: store,
+			approvalTokens: new HmacApprovalTokenService("0123456789abcdef0123456789abcdef"),
+			audit,
+			trace,
+			idFactory: () => `z${++n}`,
+			now: () => new Date("2026-09-12T00:00:00Z"),
+		});
+		const prepared = await runtime.execute({
+			toolCallId: "1",
+			toolName: "prepare_create",
+			toolVersion: "1.0.0",
+			args: { entityType: "X", values: { name: "N" } },
+			context: ctx,
+		});
+		const op = (prepared.data as { proposal: { operationId: string } }).proposal.operationId;
+		const approval = await runtime.approve(op, ctx, true);
+		await runtime.execute({
+			toolCallId: "2",
+			toolName: "commit_mutation",
+			toolVersion: "1.0.0",
+			args: { operationId: op, approvalToken: approval.approvalToken },
+			context: ctx,
+		});
+		expect(audit.events.map((e) => e.eventType)).toEqual(["PREPARED", "APPROVED", "COMMIT_STARTED", "COMMITTED"]);
+		expect(trace.events.some((e) => e.stage === "committed")).toBe(true);
+	});
+});

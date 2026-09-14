@@ -8,7 +8,13 @@ describe("M9 trace stages", () => {
 		const { instance } = service({ trace });
 		await instance.process(request({ requestedOperation: "UPDATE" }));
 		expect(trace.events.filter((event) => event.status === "OK").map((event) => event.stage)).toEqual([
-			"AUTHORIZE", "VALIDATE", "STORE", "UNDERSTAND", "ENTITY_RESOLVE", "ACTION_PROPOSE", "MUTATION_PREPARE",
+			"AUTHORIZE",
+			"VALIDATE",
+			"STORE",
+			"UNDERSTAND",
+			"ENTITY_RESOLVE",
+			"ACTION_PROPOSE",
+			"MUTATION_PREPARE",
 		]);
 	});
 });

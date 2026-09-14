@@ -198,9 +198,10 @@ export class TraceQueryService {
 		const snapshot = await this.getTrace(traceId, scope);
 		const startedAt = Date.parse(snapshot.trace.startedAt);
 		const endedAt = snapshot.trace.endedAt ? Date.parse(snapshot.trace.endedAt) : Number.NaN;
-		const durationMs = Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt
-			? endedAt - startedAt
-			: undefined;
+		const durationMs =
+			Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt
+				? endedAt - startedAt
+				: undefined;
 		return {
 			traceId,
 			status: snapshot.trace.status,

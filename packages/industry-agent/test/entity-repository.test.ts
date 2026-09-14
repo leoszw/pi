@@ -25,8 +25,14 @@ describe("InMemoryEntityRepository", () => {
 		const repository = new InMemoryEntityRepository();
 		await repository.upsertEntity(entity());
 
-		const visible = await repository.getEntityById("123456789012345678", { tenantId: "tenant-1", projectId: "project-1" });
-		const hidden = await repository.getEntityById("123456789012345678", { tenantId: "tenant-2", projectId: "project-1" });
+		const visible = await repository.getEntityById("123456789012345678", {
+			tenantId: "tenant-1",
+			projectId: "project-1",
+		});
+		const hidden = await repository.getEntityById("123456789012345678", {
+			tenantId: "tenant-2",
+			projectId: "project-1",
+		});
 
 		expect(visible?.entityId).toBe("123456789012345678");
 		expect(typeof visible?.entityId).toBe("string");

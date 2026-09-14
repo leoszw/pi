@@ -51,7 +51,9 @@ export class SchemaTraceRedactor implements TraceRedactor {
 	private readonly maxDepth: number;
 
 	constructor(policy: Partial<TraceRedactionPolicy> = {}) {
-		this.sensitiveFields = new Set((policy.sensitiveFields ?? DEFAULT_SENSITIVE_FIELDS).map((field) => field.toLowerCase()));
+		this.sensitiveFields = new Set(
+			(policy.sensitiveFields ?? DEFAULT_SENSITIVE_FIELDS).map((field) => field.toLowerCase()),
+		);
 		this.replacement = policy.replacement ?? "[REDACTED]";
 		this.maxDepth = policy.maxDepth ?? 20;
 	}

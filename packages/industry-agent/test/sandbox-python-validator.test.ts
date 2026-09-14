@@ -8,10 +8,10 @@ describe("M12 Python static validation", () => {
 	});
 
 	it.each([
-		"def main(read):\n    import os\n    return read(\"q1\")",
-		"def main(read):\n    f = open(\"/tmp/x\")\n    return read(\"q1\")",
-		"def main(read):\n    q = \"q1\"\n    return read(q)",
-		"def main(read):\n    return eval(\"1+1\")",
+		'def main(read):\n    import os\n    return read("q1")',
+		'def main(read):\n    f = open("/tmp/x")\n    return read("q1")',
+		'def main(read):\n    q = "q1"\n    return read(q)',
+		'def main(read):\n    return eval("1+1")',
 	])("rejects unsafe Python", (python) => {
 		expect(() => validateSandboxPython({ ...sandboxProgram(), python }, sandboxLimits())).toThrow();
 	});

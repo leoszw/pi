@@ -13,7 +13,16 @@ import type {
 } from "../src/sandbox/types.ts";
 
 export function sandboxContext(): RequestContext {
-	return { traceId: "trace-1", requestId: "request-1", conversationId: "conversation-1", userId: "user-1", tenantId: "tenant-1", companyId: "company-1", projectId: "project-1", createdAt: "2026-09-12T00:00:00.000Z" };
+	return {
+		traceId: "trace-1",
+		requestId: "request-1",
+		conversationId: "conversation-1",
+		userId: "user-1",
+		tenantId: "tenant-1",
+		companyId: "company-1",
+		projectId: "project-1",
+		createdAt: "2026-09-12T00:00:00.000Z",
+	};
 }
 
 export function sandboxUsage(totalTokens = 10, costUsd = 0.01): SandboxUsage {
@@ -50,29 +59,43 @@ export function sandboxSchema(): SandboxSchemaSnapshot {
 		snapshotId: "schema-1",
 		version: "schema-v1",
 		scope: { tenantId: "tenant-1", companyId: "company-1", projectId: "project-1" },
-		tables: [{
-			tableName: "vw_boq_read",
-			description: "Read-only BOQ sandbox view",
-			sourceVersion: "source-v1",
-			readOnly: true,
-			columns: [
-				{ name: "ledger_id", dataType: "varchar", nullable: false, sandboxReadable: true, entityType: "BOQ_ITEM" },
-				{ name: "ledger_name", dataType: "varchar", nullable: false, sandboxReadable: true },
-				{ name: "design_quantity", dataType: "decimal", nullable: true, sandboxReadable: true },
-				{ name: "tenant_id", dataType: "varchar", nullable: false, sandboxReadable: true },
-				{ name: "company_id", dataType: "varchar", nullable: false, sandboxReadable: true },
-				{ name: "project_id", dataType: "varchar", nullable: false, sandboxReadable: true },
-			],
-			scopeColumns: { tenantId: "tenant_id", companyId: "company_id", projectId: "project_id" },
-		}],
+		tables: [
+			{
+				tableName: "vw_boq_read",
+				description: "Read-only BOQ sandbox view",
+				sourceVersion: "source-v1",
+				readOnly: true,
+				columns: [
+					{
+						name: "ledger_id",
+						dataType: "varchar",
+						nullable: false,
+						sandboxReadable: true,
+						entityType: "BOQ_ITEM",
+					},
+					{ name: "ledger_name", dataType: "varchar", nullable: false, sandboxReadable: true },
+					{ name: "design_quantity", dataType: "decimal", nullable: true, sandboxReadable: true },
+					{ name: "tenant_id", dataType: "varchar", nullable: false, sandboxReadable: true },
+					{ name: "company_id", dataType: "varchar", nullable: false, sandboxReadable: true },
+					{ name: "project_id", dataType: "varchar", nullable: false, sandboxReadable: true },
+				],
+				scopeColumns: { tenantId: "tenant_id", companyId: "company_id", projectId: "project_id" },
+			},
+		],
 	};
 }
 
 export function sandboxProgram(): SandboxProgram {
 	return {
 		programId: "program-1",
-		queries: [{ queryId: "q1", sql: "SELECT ledger_id, ledger_name, design_quantity FROM vw_boq_read LIMIT 100", referencedTables: ["vw_boq_read"] }],
-		python: "def main(read):\n    rows = read(\"q1\")\n    return rows\n",
+		queries: [
+			{
+				queryId: "q1",
+				sql: "SELECT ledger_id, ledger_name, design_quantity FROM vw_boq_read LIMIT 100",
+				referencedTables: ["vw_boq_read"],
+			},
+		],
+		python: 'def main(read):\n    rows = read("q1")\n    return rows\n',
 		explanation: "Summarize BOQ quantities from a prevalidated read-only query.",
 	};
 }
@@ -88,7 +111,14 @@ export function sandboxBrokerResult(): SandboxBrokerResult {
 			{ key: "design_quantity", label: "Design Quantity", type: "NUMBER" },
 		],
 		rows: [{ ledger_id: "90071992547409931234", ledger_name: "C30 concrete", design_quantity: 12.5 }],
-		evidence: [{ evidenceId: "fact-1", sourceId: "boq:90071992547409931234", sourceVersion: "row-v7", updatedAt: "2026-09-12T00:00:00.000Z" }],
+		evidence: [
+			{
+				evidenceId: "fact-1",
+				sourceId: "boq:90071992547409931234",
+				sourceVersion: "row-v7",
+				updatedAt: "2026-09-12T00:00:00.000Z",
+			},
+		],
 		entityRefs: [{ entityType: "BOQ_ITEM", entityId: "90071992547409931234", evidenceId: "fact-1" }],
 		attestation: {
 			readOnlyEnforced: true,
@@ -105,18 +135,37 @@ export function sandboxBrokerResult(): SandboxBrokerResult {
 
 export function sandboxOutput(): SandboxExecutionOutput {
 	return {
-		tables: [{
-			tableId: "table-1",
-			name: "BOQ Quantity",
-			columns: [
-				{ key: "ledger_name", label: "Name", type: "STRING" },
-				{ key: "design_quantity", label: "Design Quantity", type: "NUMBER" },
-			],
-			rows: [{ ledger_name: "C30 concrete", design_quantity: 12.5 }],
-			sourceQueryIds: ["q1"],
-		}],
-		charts: [{ chartId: "chart-1", title: "Quantity", type: "BAR", tableId: "table-1", categoryColumn: "ledger_name", valueColumns: ["design_quantity"], sourceQueryIds: ["q1"] }],
-		narrative: [{ sectionId: "summary", heading: "Summary", body: "The authoritative design quantity is 12.5.", sourceQueryIds: ["q1"] }],
+		tables: [
+			{
+				tableId: "table-1",
+				name: "BOQ Quantity",
+				columns: [
+					{ key: "ledger_name", label: "Name", type: "STRING" },
+					{ key: "design_quantity", label: "Design Quantity", type: "NUMBER" },
+				],
+				rows: [{ ledger_name: "C30 concrete", design_quantity: 12.5 }],
+				sourceQueryIds: ["q1"],
+			},
+		],
+		charts: [
+			{
+				chartId: "chart-1",
+				title: "Quantity",
+				type: "BAR",
+				tableId: "table-1",
+				categoryColumn: "ledger_name",
+				valueColumns: ["design_quantity"],
+				sourceQueryIds: ["q1"],
+			},
+		],
+		narrative: [
+			{
+				sectionId: "summary",
+				heading: "Summary",
+				body: "The authoritative design quantity is 12.5.",
+				sourceQueryIds: ["q1"],
+			},
+		],
 		answer: "The authoritative design quantity is 12.5.",
 	};
 }
@@ -139,7 +188,23 @@ export function sandboxAttestation(python: string): SandboxRuntimeAttestation {
 }
 
 export function sandboxReadTool(): ToolDefinition {
-	return { name: "query_quantity", version: "1.0.0", domain: "engineering", action: "READ", description: "Read quantity", inputSchema: {}, outputSchema: {}, allowedEntityTypes: ["BOQ_ITEM"], permission: "quantity.read", dataScopeRule: "SERVER_REQUEST_CONTEXT", riskLevel: "LOW", requiresConfirmation: false, supportsDryRun: false, idempotent: true, timeoutMs: 5000 };
+	return {
+		name: "query_quantity",
+		version: "1.0.0",
+		domain: "engineering",
+		action: "READ",
+		description: "Read quantity",
+		inputSchema: {},
+		outputSchema: {},
+		allowedEntityTypes: ["BOQ_ITEM"],
+		permission: "quantity.read",
+		dataScopeRule: "SERVER_REQUEST_CONTEXT",
+		riskLevel: "LOW",
+		requiresConfirmation: false,
+		supportsDryRun: false,
+		idempotent: true,
+		timeoutMs: 5000,
+	};
 }
 
 export function sandboxMutationResult(): MutationPrepareResult {
@@ -151,7 +216,14 @@ export function sandboxMutationResult(): MutationPrepareResult {
 			operation: "UPDATE",
 			entityType: "BOQ_ITEM",
 			scope: { userId: "user-1", tenantId: "tenant-1", companyId: "company-1", projectId: "project-1" },
-			targets: [{ entityId: "90071992547409931234", recordVersion: "v1", before: { owner: "李四" }, after: { owner: "张三" } }],
+			targets: [
+				{
+					entityId: "90071992547409931234",
+					recordVersion: "v1",
+					before: { owner: "李四" },
+					after: { owner: "张三" },
+				},
+			],
 			recordVersion: "v1",
 			digest: "digest-1",
 			affectedCount: 1,
@@ -165,5 +237,9 @@ export function sandboxMutationResult(): MutationPrepareResult {
 }
 
 export function sandboxReportResult(): ReportGenerationResult {
-	return { reportId: "report-1", artifacts: [], uiActions: [{ id: "preview-1", type: "report_preview", payload: { reportId: "report-1" } }] };
+	return {
+		reportId: "report-1",
+		artifacts: [],
+		uiActions: [{ id: "preview-1", type: "report_preview", payload: { reportId: "report-1" } }],
+	};
 }

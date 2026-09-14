@@ -64,7 +64,13 @@ describe("IndustryAgentGateway semantic integration", () => {
 				idFactory: () => ids[idIndex++] ?? "unexpected-id",
 				now: () => new Date("2026-09-11T00:00:00.000Z"),
 			},
-			trace: { repository, idFactory: (() => { let id = 0; return () => `semantic-span-${++id}`; })() },
+			trace: {
+				repository,
+				idFactory: (() => {
+					let id = 0;
+					return () => `semantic-span-${++id}`;
+				})(),
+			},
 		});
 
 		const result = await gateway.run({
@@ -92,7 +98,13 @@ describe("IndustryAgentGateway semantic integration", () => {
 				idFactory: () => ids[idIndex++] ?? "unexpected-id",
 				now: () => new Date("2026-09-11T00:00:00.000Z"),
 			},
-			trace: { repository, idFactory: (() => { let id = 0; return () => `fallback-span-${++id}`; })() },
+			trace: {
+				repository,
+				idFactory: (() => {
+					let id = 0;
+					return () => `fallback-span-${++id}`;
+				})(),
+			},
 		});
 
 		const result = await gateway.run({ message: "查一下这个", userId: "user-1", tenantId: "tenant-1" });

@@ -3,7 +3,29 @@ import { request, resolution, service, updateProposal } from "./image-input-help
 
 describe("M9 image review boundaries", () => {
 	it("returns entity picker and never prepares on ambiguity", async () => {
-		const ambiguous = { ...resolution, matches: [], ambiguities: [{ ambiguityId: "a1", label: "桥墩", evidenceObservationIds: ["o2"], candidates: [{ candidate: { entityId: "E1", entityType: "ENGINEERING_POSITION", canonicalName: "1#墩", score: 0.8, source: "hybrid" }, scope: { tenantId: "t1", companyId: "c1", projectId: "p1" } }] }] };
+		const ambiguous = {
+			...resolution,
+			matches: [],
+			ambiguities: [
+				{
+					ambiguityId: "a1",
+					label: "桥墩",
+					evidenceObservationIds: ["o2"],
+					candidates: [
+						{
+							candidate: {
+								entityId: "E1",
+								entityType: "ENGINEERING_POSITION",
+								canonicalName: "1#墩",
+								score: 0.8,
+								source: "hybrid",
+							},
+							scope: { tenantId: "t1", companyId: "c1", projectId: "p1" },
+						},
+					],
+				},
+			],
+		};
 		const { instance, preparer } = service({ entityResolution: ambiguous });
 		const result = await instance.process(request());
 		expect(result.status).toBe("NEEDS_ENTITY_REVIEW");

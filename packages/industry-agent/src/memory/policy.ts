@@ -13,7 +13,10 @@ export function workingMemoryScope(context: RequestContext): WorkingMemoryScope 
 
 export function assertPersistableSource(source: WorkingMemoryCaptureSource): WorkingMemoryPersistableSource {
 	if (source === "LLM_INFERENCE") {
-		throw new IndustryAgentError("MEMORY_SOURCE_NOT_PERSISTABLE", "Unconfirmed LLM inference cannot be persisted as working memory");
+		throw new IndustryAgentError(
+			"MEMORY_SOURCE_NOT_PERSISTABLE",
+			"Unconfirmed LLM inference cannot be persisted as working memory",
+		);
 	}
 	return source;
 }
@@ -25,7 +28,10 @@ export function assertSameWorkingMemoryScope(expected: WorkingMemoryScope, actua
 		expected.userId !== actual.userId ||
 		expected.companyId !== actual.companyId
 	) {
-		throw new IndustryAgentError("MEMORY_SCOPE_MISMATCH", "Working memory scope does not match the authenticated conversation scope");
+		throw new IndustryAgentError(
+			"MEMORY_SCOPE_MISMATCH",
+			"Working memory scope does not match the authenticated conversation scope",
+		);
 	}
 }
 

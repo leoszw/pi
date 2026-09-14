@@ -9,26 +9,45 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isUiAction(value: unknown): value is UIAction {
-	if (!isRecord(value) || typeof value["id"] !== "string" || typeof value["type"] !== "string") return false;
-	return isRecord(value["payload"]);
+	if (!isRecord(value) || typeof value.id !== "string" || typeof value.type !== "string") return false;
+	return isRecord(value.payload);
 }
 
 function isProposal(value: unknown): value is MutationProposalRecord {
-	return isRecord(value)
-		&& typeof value["operationId"] === "string"
-		&& typeof value["digest"] === "string"
-		&& value["status"] === "PREPARED"
-		&& typeof value["entityType"] === "string";
+	return (
+		isRecord(value) &&
+		typeof value.operationId === "string" &&
+		typeof value.digest === "string" &&
+		value.status === "PREPARED" &&
+		typeof value.entityType === "string"
+	);
 }
 
 function isMutationPrepareResult(value: unknown): value is MutationPrepareResult {
-	return isRecord(value) && isProposal(value["proposal"]) && Array.isArray(value["uiActions"]) && value["uiActions"].every(isUiAction);
+	return (
+		isRecord(value) &&
+		isProposal(value.proposal) &&
+		Array.isArray(value.uiActions) &&
+		value.uiActions.every(isUiAction)
+	);
 }
 
 function toolArgs(proposal: ImageActionProposal): { toolName: string; args: JsonObject } {
-	if (proposal.operation === "CREATE") return { toolName: "prepare_create", args: { entityType: proposal.entityType, values: proposal.values } };
-	if (proposal.operation === "UPDATE") return { toolName: "prepare_update", args: { entityType: proposal.entityType, entityIds: [...proposal.targetEntityIds], patch: proposal.values } };
-	return { toolName: "prepare_delete", args: { entityType: proposal.entityType, entityIds: [...proposal.targetEntityIds], ...(proposal.reason ? { reason: proposal.reason } : {}) } };
+	if (proposal.operation === "CREATE")
+		return { toolName: "prepare_create", args: { entityType: proposal.entityType, values: proposal.values } };
+	if (proposal.operation === "UPDATE")
+		return {
+			toolName: "prepare_update",
+			args: { entityType: proposal.entityType, entityIds: [...proposal.targetEntityIds], patch: proposal.values },
+		};
+	return {
+		toolName: "prepare_delete",
+		args: {
+			entityType: proposal.entityType,
+			entityIds: [...proposal.targetEntityIds],
+			...(proposal.reason ? { reason: proposal.reason } : {}),
+		},
+	};
 }
 
 export class MutationToolImagePreparer implements ImageMutationPreparer {
@@ -48,8 +67,16 @@ export class MutationToolImagePreparer implements ImageMutationPreparer {
 			context: input.context,
 		};
 		const result = await this.runtime.execute(invocation);
-		if (!result.ok) throw new IndustryAgentError("IMAGE_MUTATION_PREPARE_FAILED", `Mutation prepare failed: ${result.error?.code ?? "unknown"}: ${result.error?.message ?? "unknown"}`);
-		if (!isMutationPrepareResult(result.data)) throw new IndustryAgentError("IMAGE_MUTATION_PREPARE_FAILED", "Mutation prepare returned an invalid result shape");
+		if (!result.ok)
+			throw new IndustryAgentError(
+				"IMAGE_MUTATION_PREPARE_FAILED",
+				`Mutation prepare failed: ${result.error?.code ?? "unknown"}: ${result.error?.message ?? "unknown"}`,
+			);
+		if (!isMutationPrepareResult(result.data))
+			throw new IndustryAgentError(
+				"IMAGE_MUTATION_PREPARE_FAILED",
+				"Mutation prepare returned an invalid result shape",
+			);
 		return result.data;
 	}
 }

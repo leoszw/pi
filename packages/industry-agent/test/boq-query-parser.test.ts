@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { parseBoqQuery } from "../src/retrieval/boq/query-parser.ts";
-const catalog = { knownCodes: new Set(["403-2-a"]), knownAncestorCodes: new Set(["403-2"]), sections: [{ sectionId: "4", sectionName: "桥梁工程" }] };
+
+const catalog = {
+	knownCodes: new Set(["403-2-a"]),
+	knownAncestorCodes: new Set(["403-2"]),
+	sections: [{ sectionId: "4", sectionName: "桥梁工程" }],
+};
 
 describe("BOQ query parser", () => {
 	it("keeps operation independent from code query mode", () => {

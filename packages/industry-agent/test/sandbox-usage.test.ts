@@ -11,6 +11,15 @@ describe("M12 usage and budgets", () => {
 	});
 
 	it("rejects inconsistent token accounting", () => {
-		expect(() => validateSandboxUsage({ inputTokens: 10, outputTokens: 10, cachedTokens: 0, reasoningTokens: 0, totalTokens: 5, costUsd: 0 })).toThrow();
+		expect(() =>
+			validateSandboxUsage({
+				inputTokens: 10,
+				outputTokens: 10,
+				cachedTokens: 0,
+				reasoningTokens: 0,
+				totalTokens: 5,
+				costUsd: 0,
+			}),
+		).toThrow();
 	});
 });

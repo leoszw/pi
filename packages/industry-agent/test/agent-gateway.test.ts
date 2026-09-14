@@ -50,13 +50,10 @@ describe("IndustryAgentGateway", () => {
 		});
 		const eventTypes: string[] = [];
 
-		const result = await gateway.run(
-			{ message: "hello", userId: "user-1", tenantId: "tenant-1" },
-			(streamEvent) => {
-				eventTypes.push(streamEvent.event.type);
-				expect(streamEvent.context.traceId).toBe("trace-1");
-			},
-		);
+		const result = await gateway.run({ message: "hello", userId: "user-1", tenantId: "tenant-1" }, (streamEvent) => {
+			eventTypes.push(streamEvent.event.type);
+			expect(streamEvent.context.traceId).toBe("trace-1");
+		});
 
 		expect(result.context.traceId).toBe("trace-1");
 		expect(result.context.requestId).toBe("request-1");

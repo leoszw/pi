@@ -26,7 +26,10 @@ describe("buildEntityHierarchyPath", () => {
 		await repository.upsertEntity(node("root", "大桥"));
 		await repository.upsertEntity(node("child", "0#盖梁", "root"));
 
-		const path = await buildEntityHierarchyPath("child", repository, { tenantId: "tenant-1", projectId: "project-1" });
+		const path = await buildEntityHierarchyPath("child", repository, {
+			tenantId: "tenant-1",
+			projectId: "project-1",
+		});
 		expect(path.entityIds).toEqual(["root", "child"]);
 		expect(path.names).toEqual(["大桥", "0#盖梁"]);
 		expect(path.incomplete).toBe(false);
@@ -35,7 +38,10 @@ describe("buildEntityHierarchyPath", () => {
 	it("does not invent a missing parent", async () => {
 		const repository = new InMemoryEntityRepository();
 		await repository.upsertEntity(node("child", "203-1-a-1", "missing-parent"));
-		const path = await buildEntityHierarchyPath("child", repository, { tenantId: "tenant-1", projectId: "project-1" });
+		const path = await buildEntityHierarchyPath("child", repository, {
+			tenantId: "tenant-1",
+			projectId: "project-1",
+		});
 		expect(path.entityIds).toEqual(["child"]);
 		expect(path.incomplete).toBe(true);
 		expect(path.missingParentEntityId).toBe("missing-parent");
@@ -45,8 +51,8 @@ describe("buildEntityHierarchyPath", () => {
 		const repository = new InMemoryEntityRepository();
 		await repository.upsertEntity(node("a", "A", "b"));
 		await repository.upsertEntity(node("b", "B", "a"));
-		await expect(buildEntityHierarchyPath("a", repository, { tenantId: "tenant-1", projectId: "project-1" })).rejects.toThrow(
-			"entity hierarchy cycle detected",
-		);
+		await expect(
+			buildEntityHierarchyPath("a", repository, { tenantId: "tenant-1", projectId: "project-1" }),
+		).rejects.toThrow("entity hierarchy cycle detected");
 	});
 });

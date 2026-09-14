@@ -26,7 +26,8 @@ export function normalizeDateExpression(value: string, referenceDate: Date): str
 	const month = Number(match[2]);
 	const day = Number(match[3]);
 	const date = new Date(Date.UTC(year, month - 1, day));
-	if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return undefined;
+	if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day)
+		return undefined;
 	return formatDate(date);
 }
 
@@ -49,7 +50,8 @@ export function extractDate(text: string, referenceDate: Date): DateExtraction {
 		const between = text.slice(first.index + first[0].length, second.index);
 		const secondValue = normalizeDateExpression(second[0], referenceDate);
 		if (secondValue && RANGE_SEPARATOR.test(between)) {
-			const ordered: readonly [string, string] = firstValue <= secondValue ? [firstValue, secondValue] : [secondValue, firstValue];
+			const ordered: readonly [string, string] =
+				firstValue <= secondValue ? [firstValue, secondValue] : [secondValue, firstValue];
 			return {
 				range: {
 					value: ordered,

@@ -6,7 +6,12 @@ import { context, prepareResult, updateProposal } from "./image-input-helpers.ts
 describe("M9 mutation tool adapter", () => {
 	it("calls prepare_update only", async () => {
 		let invocation: ToolInvocation | undefined;
-		const runtime = { execute: async (input: ToolInvocation): Promise<ToolResult> => { invocation = input; return { toolCallId: input.toolCallId, ok: true, data: prepareResult() }; } };
+		const runtime = {
+			execute: async (input: ToolInvocation): Promise<ToolResult> => {
+				invocation = input;
+				return { toolCallId: input.toolCallId, ok: true, data: prepareResult() };
+			},
+		};
 		const adapter = new MutationToolImagePreparer(runtime, () => "tool-call-1");
 		const result = await adapter.prepare({ context: context(), proposal: updateProposal });
 		expect(invocation?.toolName).toBe("prepare_update");

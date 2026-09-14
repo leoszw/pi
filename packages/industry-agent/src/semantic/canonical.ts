@@ -34,8 +34,15 @@ export function buildHardFilters(constraints: readonly SemanticConstraint[]): Js
 }
 
 export function canonicalizeSemanticFrame(frame: SemanticFrame): SemanticFrame {
-	const constraints = [...frame.constraints].sort((left, right) => constraintKey(left).localeCompare(constraintKey(right)));
-	const mentions = [...frame.mentions].sort((left, right) => left.start - right.start || left.end - right.end || (left.entityType ?? "").localeCompare(right.entityType ?? ""));
+	const constraints = [...frame.constraints].sort((left, right) =>
+		constraintKey(left).localeCompare(constraintKey(right)),
+	);
+	const mentions = [...frame.mentions].sort(
+		(left, right) =>
+			left.start - right.start ||
+			left.end - right.end ||
+			(left.entityType ?? "").localeCompare(right.entityType ?? ""),
+	);
 	return {
 		originalText: frame.originalText,
 		intent: frame.intent,

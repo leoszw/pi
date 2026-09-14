@@ -87,7 +87,13 @@ describe("IndustryAgentGateway trace integration", () => {
 		const gateway = new IndustryAgentGateway({
 			runtimeFactory: () => new CompletingRuntime(),
 			contextFactoryOptions: { idFactory: () => ids[idIndex++] ?? "unexpected-id" },
-			trace: { repository, idFactory: (() => { let id = 0; return () => `span-${++id}`; })() },
+			trace: {
+				repository,
+				idFactory: (() => {
+					let id = 0;
+					return () => `span-${++id}`;
+				})(),
+			},
 		});
 
 		await gateway.run({ message: "hello", userId: "user-1", tenantId: "tenant-1" });

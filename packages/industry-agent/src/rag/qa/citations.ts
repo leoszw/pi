@@ -1,6 +1,12 @@
-import { isAccessible } from "./access.ts";
 import type { RagChunkRecord, RagDocumentRecord } from "../ingestion/types.ts";
-import type { RagQaAccessFilter, RagQaCitation, RagQaEvidenceItem, RagQaRankedCandidate, RagQaSourceReader } from "./types.ts";
+import { isAccessible } from "./access.ts";
+import type {
+	RagQaAccessFilter,
+	RagQaCitation,
+	RagQaEvidenceItem,
+	RagQaRankedCandidate,
+	RagQaSourceReader,
+} from "./types.ts";
 
 function clip(text: string, maxChars: number): string {
 	const value = text.trim();
@@ -9,10 +15,21 @@ function clip(text: string, maxChars: number): string {
 
 function citationFor(id: string, document: RagDocumentRecord, chunk: RagChunkRecord): RagQaCitation {
 	return {
-		citationId: id, documentId: document.documentId, chunkId: chunk.chunkId, page: chunk.pageStart === chunk.pageEnd ? chunk.pageStart : null, pageStart: chunk.pageStart, pageEnd: chunk.pageEnd,
-		section: chunk.sectionPath.join(" > "), sectionPath: [...chunk.sectionPath], quote: clip(chunk.text, 600), sourceVersion: document.checksumSha256,
+		citationId: id,
+		documentId: document.documentId,
+		chunkId: chunk.chunkId,
+		page: chunk.pageStart === chunk.pageEnd ? chunk.pageStart : null,
+		pageStart: chunk.pageStart,
+		pageEnd: chunk.pageEnd,
+		section: chunk.sectionPath.join(" > "),
+		sectionPath: [...chunk.sectionPath],
+		quote: clip(chunk.text, 600),
+		sourceVersion: document.checksumSha256,
 		...(document.versions.parserVersion ? { parserVersion: document.versions.parserVersion } : {}),
-		chunkerVersion: chunk.chunkerVersion, embeddingVersion: chunk.embeddingVersion, lexicalIndexVersion: chunk.lexicalIndexVersion, vectorIndexVersion: chunk.vectorIndexVersion,
+		chunkerVersion: chunk.chunkerVersion,
+		embeddingVersion: chunk.embeddingVersion,
+		lexicalIndexVersion: chunk.lexicalIndexVersion,
+		vectorIndexVersion: chunk.vectorIndexVersion,
 	};
 }
 
@@ -30,11 +47,20 @@ export async function buildEvidence(
 		let parentCitation: RagQaCitation | undefined;
 		if (candidate.chunk.parentChunkId) {
 			const parent = await sources.getChunk(candidate.chunk.parentChunkId, filter);
-			if (parent && isAccessible(document, parent, filter)) { parentText = clip(parent.text, parentExpansionChars); parentCitation = citationFor(`C${index + 1}P`, document, parent); }
+			if (parent && isAccessible(document, parent, filter)) {
+				parentText = clip(parent.text, parentExpansionChars);
+				parentCitation = citationFor(`C${index + 1}P`, document, parent);
+			}
 		}
 		const contextText = parentText ? `${parentText}\n\n${candidate.chunk.text}` : candidate.chunk.text;
 		const citation = citationFor(`C${index + 1}`, document, candidate.chunk);
-		output.push({ candidate, contextText, ...(candidate.chunk.parentChunkId ? { parentChunkId: candidate.chunk.parentChunkId } : {}), citation, ...(parentCitation ? { parentCitation } : {}) });
+		output.push({
+			candidate,
+			contextText,
+			...(candidate.chunk.parentChunkId ? { parentChunkId: candidate.chunk.parentChunkId } : {}),
+			citation,
+			...(parentCitation ? { parentCitation } : {}),
+		});
 	}
 	return output;
 }

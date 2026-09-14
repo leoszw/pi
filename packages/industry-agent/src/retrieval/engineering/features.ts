@@ -19,12 +19,18 @@ export interface EngineeringBusinessScore {
 
 function normalizedEquals(left: string | undefined, right: string | undefined): boolean {
 	if (!left || !right) return false;
-	return normalizeEngineeringSemanticText(left).toLocaleLowerCase() === normalizeEngineeringSemanticText(right).toLocaleLowerCase();
+	return (
+		normalizeEngineeringSemanticText(left).toLocaleLowerCase() ===
+		normalizeEngineeringSemanticText(right).toLocaleLowerCase()
+	);
 }
 
 function includesNormalized(haystack: string, needle: string): boolean {
 	const normalizedNeedle = normalizeEngineeringSemanticText(needle).toLocaleLowerCase();
-	return normalizedNeedle.length > 0 && normalizeEngineeringSemanticText(haystack).toLocaleLowerCase().includes(normalizedNeedle);
+	return (
+		normalizedNeedle.length > 0 &&
+		normalizeEngineeringSemanticText(haystack).toLocaleLowerCase().includes(normalizedNeedle)
+	);
 }
 
 export function scoreEngineeringBusinessFeatures(
@@ -32,15 +38,31 @@ export function scoreEngineeringBusinessFeatures(
 	document: EngineeringSearchDocument,
 ): EngineeringBusinessScore {
 	const semantic = query.semanticQuery;
-	const exactName = normalizedEquals(semantic, document.engineeringName) || normalizedEquals(semantic, document.semanticName) ? 1 : 0;
-	const aliasMatch = document.aliasTerms.some((alias) => normalizedEquals(semantic, alias) || includesNormalized(semantic, alias)) ? 1 : 0;
-	const unitMatch = query.unitEngineeringId && document.unitEngineeringId === query.unitEngineeringId
+	const exactName =
+		normalizedEquals(semantic, document.engineeringName) || normalizedEquals(semantic, document.semanticName) ? 1 : 0;
+	const aliasMatch = document.aliasTerms.some(
+		(alias) => normalizedEquals(semantic, alias) || includesNormalized(semantic, alias),
+	)
 		? 1
-		: query.unitEngineeringName && normalizedEquals(query.unitEngineeringName, document.unitEngineeringName) ? 1 : 0;
-	const typeMatch = query.engineeringTypeName && normalizedEquals(query.engineeringTypeName, document.engineeringTypeName) ? 1 : 0;
-	const categoryMatch = query.engineeringCategoryName && normalizedEquals(query.engineeringCategoryName, document.engineeringCategoryName) ? 1 : 0;
-	const positionTokenMatch = query.positionTokens.length > 0 && query.positionTokens.every((token) => document.positionTokens.includes(token)) ? 1 : 0;
-	const hierarchyMatch = query.unitEngineeringName && includesNormalized(document.pathText, query.unitEngineeringName) ? 1 : 0;
+		: 0;
+	const unitMatch =
+		query.unitEngineeringId && document.unitEngineeringId === query.unitEngineeringId
+			? 1
+			: query.unitEngineeringName && normalizedEquals(query.unitEngineeringName, document.unitEngineeringName)
+				? 1
+				: 0;
+	const typeMatch =
+		query.engineeringTypeName && normalizedEquals(query.engineeringTypeName, document.engineeringTypeName) ? 1 : 0;
+	const categoryMatch =
+		query.engineeringCategoryName && normalizedEquals(query.engineeringCategoryName, document.engineeringCategoryName)
+			? 1
+			: 0;
+	const positionTokenMatch =
+		query.positionTokens.length > 0 && query.positionTokens.every((token) => document.positionTokens.includes(token))
+			? 1
+			: 0;
+	const hierarchyMatch =
+		query.unitEngineeringName && includesNormalized(document.pathText, query.unitEngineeringName) ? 1 : 0;
 	const leafPreference = query.queryMode === "ENTITY_SHORT" && document.isMinUnit ? 1 : 0;
 	const features = {
 		exactName,
@@ -52,13 +74,22 @@ export function scoreEngineeringBusinessFeatures(
 		hierarchyMatch,
 		leafPreference,
 	};
-	let score = Object.entries(FEATURE_WEIGHTS).reduce((total, [name, weight]) => total + weight * features[name as keyof typeof features], 0);
-	if (query.alignmentSide === "NONE" && query.localSide !== "NONE" && document.localSide === query.localSide) score += 0.08;
+	let score = Object.entries(FEATURE_WEIGHTS).reduce(
+		(total, [name, weight]) => total + weight * features[name as keyof typeof features],
+		0,
+	);
+	if (query.alignmentSide === "NONE" && query.localSide !== "NONE" && document.localSide === query.localSide)
+		score += 0.08;
 	if (!query.hints.engineeringTypeName || query.hints.engineeringTypeName.mode !== "hard") {
-		if (query.engineeringTypeName && normalizedEquals(query.engineeringTypeName, document.engineeringTypeName)) score += 0.05;
+		if (query.engineeringTypeName && normalizedEquals(query.engineeringTypeName, document.engineeringTypeName))
+			score += 0.05;
 	}
 	if (!query.hints.engineeringCategoryName || query.hints.engineeringCategoryName.mode !== "hard") {
-		if (query.engineeringCategoryName && normalizedEquals(query.engineeringCategoryName, document.engineeringCategoryName)) score += 0.04;
+		if (
+			query.engineeringCategoryName &&
+			normalizedEquals(query.engineeringCategoryName, document.engineeringCategoryName)
+		)
+			score += 0.04;
 	}
 	return { score: Math.min(1, score), features };
 }

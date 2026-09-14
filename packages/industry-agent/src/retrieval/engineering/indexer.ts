@@ -1,6 +1,6 @@
-import { IndustryAgentError } from "../../errors/industry-agent-error.ts";
 import type { EngineeringPositionSourceRow } from "../../entity/source-adapters.ts";
 import type { EntityHierarchyPath } from "../../entity/types.ts";
+import { IndustryAgentError } from "../../errors/industry-agent-error.ts";
 import { buildEngineeringSearchDocument } from "./text-builder.ts";
 import type { EngineeringEmbeddingProvider, EngineeringRetrievalConfig, EngineeringSearchDocument } from "./types.ts";
 
@@ -97,8 +97,9 @@ export class EngineeringIndexingService {
 				embeddingVersion: this.embedding.modelVersion,
 				indexVersion: this.config.indexVersion,
 			});
-			const preserveExistingVectors = state?.embeddingInputHash === document.embeddingInputHash
-				&& state.indexVersion === this.config.indexVersion;
+			const preserveExistingVectors =
+				state?.embeddingInputHash === document.embeddingInputHash &&
+				state.indexVersion === this.config.indexVersion;
 			if (!preserveExistingVectors) {
 				const [nameVector, contextVector] = await Promise.all([
 					this.embedding.embed(document.embeddingNameText),
@@ -127,7 +128,11 @@ export class EngineeringIndexingService {
 	private assertVector(vector: readonly number[]): void {
 		if (vector.length !== this.config.embeddingDimension || vector.length !== this.embedding.dimension) {
 			throw new IndustryAgentError("RETRIEVAL_ERROR", "engineering index vector dimension mismatch", {
-				details: { expected: this.config.embeddingDimension, provider: this.embedding.dimension, actual: vector.length },
+				details: {
+					expected: this.config.embeddingDimension,
+					provider: this.embedding.dimension,
+					actual: vector.length,
+				},
 			});
 		}
 	}

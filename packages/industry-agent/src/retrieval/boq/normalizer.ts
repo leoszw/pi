@@ -23,9 +23,21 @@ export function normalizeBoqUnit(value: string | undefined): string | undefined 
 	if (!value) return undefined;
 	const raw = normalizeBoqText(value).toLowerCase();
 	const map: Readonly<Record<string, string>> = {
-		"㎡": "m²", "m²": "m²", "m2": "m²", "平方米": "m²",
-		"m³": "m³", "m3": "m³", "立方米": "m³",
-		"m": "m", "米": "m", "kg": "kg", "千克": "kg", "t": "t", "吨": "t", "km": "km", "公里": "km",
+		"㎡": "m²",
+		"m²": "m²",
+		m2: "m²",
+		平方米: "m²",
+		"m³": "m³",
+		m3: "m³",
+		立方米: "m³",
+		m: "m",
+		米: "m",
+		kg: "kg",
+		千克: "kg",
+		t: "t",
+		吨: "t",
+		km: "km",
+		公里: "km",
 	};
 	return (map[raw] ?? raw) || undefined;
 }

@@ -1,4 +1,12 @@
-import type { JsonObject, MutationOperation, RequestContext, ToolDefinition, ToolInvocation, ToolResult, UIAction } from "../contracts/index.ts";
+import type {
+	JsonObject,
+	MutationOperation,
+	RequestContext,
+	ToolDefinition,
+	ToolInvocation,
+	ToolResult,
+	UIAction,
+} from "../contracts/index.ts";
 
 export interface MutationScope {
 	userId: string;
@@ -52,10 +60,26 @@ export interface MutationReadRepository {
 }
 
 export interface MutationWriteSession {
-	getRecord(entityType: string, entityId: string, scope: MutationScope, options?: { includeDeleted?: boolean }): Promise<MutableBusinessRecord | undefined>;
+	getRecord(
+		entityType: string,
+		entityId: string,
+		scope: MutationScope,
+		options?: { includeDeleted?: boolean },
+	): Promise<MutableBusinessRecord | undefined>;
 	create(entityType: string, data: JsonObject, scope: MutationScope): Promise<MutableBusinessRecord>;
-	update(entityType: string, entityId: string, patch: JsonObject, expectedVersion: string, scope: MutationScope): Promise<MutableBusinessRecord>;
-	softDelete(entityType: string, entityId: string, expectedVersion: string, scope: MutationScope): Promise<MutableBusinessRecord>;
+	update(
+		entityType: string,
+		entityId: string,
+		patch: JsonObject,
+		expectedVersion: string,
+		scope: MutationScope,
+	): Promise<MutableBusinessRecord>;
+	softDelete(
+		entityType: string,
+		entityId: string,
+		expectedVersion: string,
+		scope: MutationScope,
+	): Promise<MutableBusinessRecord>;
 	consumeApproval(nonce: string, operationId: string, at: string): Promise<boolean>;
 }
 

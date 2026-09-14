@@ -6,7 +6,9 @@ function key(scope: WorkingMemoryScope): string {
 	return JSON.stringify([scope.tenantId, scope.userId, scope.companyId, scope.conversationId]);
 }
 
-function clone<T>(value: T): T { return structuredClone(value); }
+function clone<T>(value: T): T {
+	return structuredClone(value);
+}
 
 export class InMemoryWorkingMemoryRepository implements WorkingMemoryRepository {
 	private readonly states = new Map<string, WorkingMemoryState>();
@@ -22,7 +24,8 @@ export class InMemoryWorkingMemoryRepository implements WorkingMemoryRepository 
 		const stateKey = key(state.scope);
 		const current = this.states.get(stateKey);
 		if (expectedRevision === null) {
-			if (current) throw new IndustryAgentError("MEMORY_VERSION_CONFLICT", "Working memory was created concurrently");
+			if (current)
+				throw new IndustryAgentError("MEMORY_VERSION_CONFLICT", "Working memory was created concurrently");
 		} else if (!current || current.revision !== expectedRevision) {
 			throw new IndustryAgentError("MEMORY_VERSION_CONFLICT", "Working memory revision changed concurrently");
 		}

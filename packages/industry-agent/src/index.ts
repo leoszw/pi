@@ -1,4 +1,5 @@
 export * from "./agent-loop/index.ts";
+export { validateVerificationDecision } from "./agent-loop/index.ts";
 export * from "./context/request-context.ts";
 export * from "./context/semantic-context.ts";
 export * from "./contracts/index.ts";
@@ -22,6 +23,8 @@ export * from "./rag/qa/index.ts";
 export * from "./report/index.ts";
 export * from "./retrieval/boq/index.ts";
 export * from "./retrieval/engineering/index.ts";
+// Disambiguate same-named exports from sibling modules (both also star-exported here).
+export { weightedRrf } from "./retrieval/engineering/index.ts";
 export * from "./sandbox/index.ts";
 export * from "./semantic/canonical.ts";
 export * from "./semantic/query-parser.ts";

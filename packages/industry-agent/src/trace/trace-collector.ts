@@ -61,7 +61,9 @@ function errorDetails(error: unknown): Readonly<Record<string, unknown>> {
 
 function assistantText(message: AssistantAgentMessage): string {
 	return message.content
-		.filter((part): part is Extract<AssistantAgentMessage["content"][number], { type: "text" }> => part.type === "text")
+		.filter(
+			(part): part is Extract<AssistantAgentMessage["content"][number], { type: "text" }> => part.type === "text",
+		)
 		.map((part) => part.text)
 		.join("");
 }
@@ -235,7 +237,12 @@ export class TraceCollector implements TraceTelemetrySink {
 	}
 
 	startTelemetrySpan(parentSpanId: string | undefined, options: SpanOptions): string {
-		return this.openSpan(options.name, "TELEMETRY", parentSpanId ?? this.activeTurnSpanId ?? this.rootSpanId, options.attributes);
+		return this.openSpan(
+			options.name,
+			"TELEMETRY",
+			parentSpanId ?? this.activeTurnSpanId ?? this.rootSpanId,
+			options.attributes,
+		);
 	}
 
 	addTelemetryEvent(spanId: string, name: string, attributes?: SpanAttributes): void {
@@ -282,9 +289,10 @@ export class TraceCollector implements TraceTelemetrySink {
 		if (!span || span.endedAt) return;
 		const explicit = this.explicitTelemetryStatuses.has(spanId);
 		const status = explicit ? span.status : failed ? "ERROR" : "OK";
-		const attributes = failed && error !== undefined && !explicit
-			? { ...span.attributes, telemetryError: this.redactor.redact(errorDetails(error)) }
-			: span.attributes;
+		const attributes =
+			failed && error !== undefined && !explicit
+				? { ...span.attributes, telemetryError: this.redactor.redact(errorDetails(error)) }
+				: span.attributes;
 		const updated: TraceSpanRecord = {
 			...span,
 			status,
@@ -420,13 +428,11 @@ export class TraceCollector implements TraceTelemetrySink {
 		};
 		this.toolCalls.set(toolCallId, updated);
 		this.schedule(() => this.repository.saveToolCall(updated));
-		if (isError) this.recordError("TOOL_ERROR", `Tool failed: ${toolName}`, { toolCallId, toolName }, false, current.spanId);
+		if (isError)
+			this.recordError("TOOL_ERROR", `Tool failed: ${toolName}`, { toolCallId, toolName }, false, current.spanId);
 	}
 
-	private closeActiveTurn(
-		message?: AgentMessage,
-		forcedStatus?: Exclude<TraceSpanRecord["status"], "RUNNING">,
-	): void {
+	private closeActiveTurn(message?: AgentMessage, forcedStatus?: Exclude<TraceSpanRecord["status"], "RUNNING">): void {
 		if (!this.activeTurnSpanId) return;
 		let status: Exclude<TraceSpanRecord["status"], "RUNNING"> = forcedStatus ?? "OK";
 		if (!forcedStatus && message?.role === "assistant") {
@@ -438,9 +444,9 @@ export class TraceCollector implements TraceTelemetrySink {
 	}
 
 	private terminalStatusFromMessages(messages: readonly AgentMessage[]): TraceRecord["status"] {
-		const lastAssistant = [...messages].reverse().find(
-			(message): message is AssistantAgentMessage => message.role === "assistant",
-		);
+		const lastAssistant = [...messages]
+			.reverse()
+			.find((message): message is AssistantAgentMessage => message.role === "assistant");
 		if (lastAssistant?.stopReason === "error") return "FAILED";
 		if (lastAssistant?.stopReason === "aborted") return "ABORTED";
 		return "COMPLETED";
@@ -448,9 +454,9 @@ export class TraceCollector implements TraceTelemetrySink {
 
 	private recordTerminalFromMessages(messages: readonly AgentMessage[]): void {
 		if (this.terminalRecorded) return;
-		const lastAssistant = [...messages].reverse().find(
-			(message): message is AssistantAgentMessage => message.role === "assistant",
-		);
+		const lastAssistant = [...messages]
+			.reverse()
+			.find((message): message is AssistantAgentMessage => message.role === "assistant");
 		const status = this.terminalStatusFromMessages(messages);
 		this.trace = {
 			...this.trace,

@@ -44,8 +44,7 @@ function normalizePositionToken(value: string): string {
 
 function extractPositionTokens(text: string): string[] {
 	const tokens = new Set<string>();
-	const normalized = text.replace(/([0-9]+)\s*(?:号|#)\s*台/g, "$1#桥台")
-		.replace(/([0-9]+)\s*号\s*墩/g, "$1#墩");
+	const normalized = text.replace(/([0-9]+)\s*(?:号|#)\s*台/g, "$1#桥台").replace(/([0-9]+)\s*号\s*墩/g, "$1#墩");
 	for (const pattern of POSITION_PATTERNS) {
 		for (const match of normalized.matchAll(pattern)) tokens.add(normalizePositionToken(match[0]));
 	}
@@ -58,7 +57,7 @@ function stripStructuredTokens(text: string): string {
 		.replace(/(?:附近|前后|左右)\s*\d*\s*(?:米|m)?/gi, " ")
 		.replace(/\s+/g, " ")
 		.trim()
-		.replace(/^[\-~～—–至到\s]+|[\-~～—–至到\s]+$/g, "");
+		.replace(/^[-~～—–至到\s]+|[-~～—–至到\s]+$/g, "");
 }
 
 function effectiveCjkLength(value: string): number {
@@ -68,8 +67,10 @@ function effectiveCjkLength(value: string): number {
 function queryModeFor(query: Omit<ParsedEngineeringQuery, "queryMode">): EngineeringQueryMode {
 	if (query.engineeringCode) return "CODE";
 	if (query.chainageMode) return "CHAINAGE";
-	if (query.unitEngineeringName || query.hints.engineeringCategoryName || query.hints.engineeringTypeName) return "CONTEXT";
-	if (effectiveCjkLength(query.semanticQuery) > 0 && effectiveCjkLength(query.semanticQuery) <= 12) return "ENTITY_SHORT";
+	if (query.unitEngineeringName || query.hints.engineeringCategoryName || query.hints.engineeringTypeName)
+		return "CONTEXT";
+	if (effectiveCjkLength(query.semanticQuery) > 0 && effectiveCjkLength(query.semanticQuery) <= 12)
+		return "ENTITY_SHORT";
 	return query.semanticQuery.length > 0 ? "CONTEXT" : "DEFAULT";
 }
 
@@ -86,7 +87,13 @@ export function parseEngineeringQuery(
 	const nearby = /(?:附近|前后|左右)/.test(rawQuery);
 	const firstPrefix = first?.groups?.prefix?.toUpperCase();
 	const secondPrefix = second?.groups?.prefix?.toUpperCase();
-	const crossAlignment = Boolean(firstValue !== undefined && secondValue !== undefined && firstPrefix && secondPrefix && firstPrefix !== secondPrefix);
+	const crossAlignment = Boolean(
+		firstValue !== undefined &&
+			secondValue !== undefined &&
+			firstPrefix &&
+			secondPrefix &&
+			firstPrefix !== secondPrefix,
+	);
 	let chainageMode: ParsedEngineeringQuery["chainageMode"];
 	let chainageStartM: number | undefined;
 	let chainageEndM: number | undefined;
@@ -136,7 +143,9 @@ export function parseEngineeringQuery(
 			...(side.confidence === undefined ? {} : { alignmentSide: side.confidence }),
 			...(hints.unitEngineeringId ? { unitEngineeringId: hints.unitEngineeringId.confidence } : {}),
 			...(hints.unitEngineeringName ? { unitEngineeringName: hints.unitEngineeringName.confidence } : {}),
-			...(hints.engineeringCategoryName ? { engineeringCategoryName: hints.engineeringCategoryName.confidence } : {}),
+			...(hints.engineeringCategoryName
+				? { engineeringCategoryName: hints.engineeringCategoryName.confidence }
+				: {}),
 			...(hints.engineeringTypeName ? { engineeringTypeName: hints.engineeringTypeName.confidence } : {}),
 		},
 		hints,
@@ -153,7 +162,12 @@ export function buildEngineeringFilterPlan(
 	if (query.unitEngineeringId && query.hints.unitEngineeringId?.mode === "hard") {
 		filters.unitEngineeringId = query.unitEngineeringId;
 		if (query.hints.unitEngineeringId.confidence < 0.95) {
-			relaxable.push({ field: "unitEngineeringId", value: query.unitEngineeringId, confidence: query.hints.unitEngineeringId.confidence, reason: "low-confidence unit engineering" });
+			relaxable.push({
+				field: "unitEngineeringId",
+				value: query.unitEngineeringId,
+				confidence: query.hints.unitEngineeringId.confidence,
+				reason: "low-confidence unit engineering",
+			});
 		}
 	}
 	if (query.alignmentCode) filters.alignmentCode = query.alignmentCode;
@@ -161,13 +175,23 @@ export function buildEngineeringFilterPlan(
 	if (query.hints.engineeringCategoryName?.mode === "hard" && query.engineeringCategoryName) {
 		filters.engineeringCategoryName = query.engineeringCategoryName;
 		if (query.hints.engineeringCategoryName.confidence < 0.98) {
-			relaxable.push({ field: "engineeringCategoryName", value: query.engineeringCategoryName, confidence: query.hints.engineeringCategoryName.confidence, reason: "low-confidence category" });
+			relaxable.push({
+				field: "engineeringCategoryName",
+				value: query.engineeringCategoryName,
+				confidence: query.hints.engineeringCategoryName.confidence,
+				reason: "low-confidence category",
+			});
 		}
 	}
 	if (query.hints.engineeringTypeName?.mode === "hard" && query.engineeringTypeName) {
 		filters.engineeringTypeName = query.engineeringTypeName;
 		if (query.hints.engineeringTypeName.confidence < 0.98) {
-			relaxable.push({ field: "engineeringTypeName", value: query.engineeringTypeName, confidence: query.hints.engineeringTypeName.confidence, reason: "low-confidence type" });
+			relaxable.push({
+				field: "engineeringTypeName",
+				value: query.engineeringTypeName,
+				confidence: query.hints.engineeringTypeName.confidence,
+				reason: "low-confidence type",
+			});
 		}
 	}
 	if (!query.crossAlignment && query.chainageStartM !== undefined && query.chainageEndM !== undefined) {
@@ -179,7 +203,10 @@ export function buildEngineeringFilterPlan(
 	return { filters, relaxable };
 }
 
-export function relaxEngineeringFilters(plan: EngineeringFilterPlan): { filters: EngineeringFilterPlan["filters"]; relaxed: readonly string[] } {
+export function relaxEngineeringFilters(plan: EngineeringFilterPlan): {
+	filters: EngineeringFilterPlan["filters"];
+	relaxed: readonly string[];
+} {
 	const filters = { ...plan.filters };
 	const relaxed: string[] = [];
 	for (const entry of [...plan.relaxable].sort((left, right) => left.confidence - right.confidence)) {

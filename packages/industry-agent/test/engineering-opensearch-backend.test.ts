@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildEngineeringBm25Query, buildEngineeringKnnQuery } from "../src/retrieval/engineering/opensearch-backend.ts";
+import {
+	buildEngineeringBm25Query,
+	buildEngineeringKnnQuery,
+} from "../src/retrieval/engineering/opensearch-backend.ts";
 import type { ParsedEngineeringQuery } from "../src/retrieval/engineering/types.ts";
 
 const parsed: ParsedEngineeringQuery = {

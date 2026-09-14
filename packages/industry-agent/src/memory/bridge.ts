@@ -6,7 +6,9 @@ export function mergeWorkingMemorySemanticContext(
 	view: WorkingMemoryContextView,
 	resolution: WorkingMemoryResolution,
 ): SemanticContext {
-	const memoryEntityIds = resolution.entityIds.length ? resolution.entityIds : view.resolvedEntities.map((entity) => entity.entityId);
+	const memoryEntityIds = resolution.entityIds.length
+		? resolution.entityIds
+		: view.resolvedEntities.map((entity) => entity.entityId);
 	const recentEntityIds = Array.from(new Set([...(base?.recentEntityIds ?? []), ...memoryEntityIds]));
 	const project = base?.project ?? (view.effectiveProjectId ? { id: view.effectiveProjectId } : undefined);
 	return {

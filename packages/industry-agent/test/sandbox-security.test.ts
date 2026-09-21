@@ -35,7 +35,7 @@ describe("M12 Broker and runtime attestations", () => {
 		const attestation = sandboxAttestation(program.python);
 		expect(() =>
 			validateRuntimeAttestation(
-				{ ...attestation, networkDisabled: false as true },
+				{ ...attestation, networkDisabled: false },
 				program.python,
 				sandboxLimits(),
 			),

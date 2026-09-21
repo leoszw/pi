@@ -22,6 +22,7 @@ import type {
 	SandboxReadCapability,
 	SandboxReportBuilder,
 	SandboxReportBuilderInput,
+	SandboxRuntimeSafetyClaims,
 } from "../packages/industry-agent/src/sandbox/index.ts";
 import { pythonSha256 } from "../packages/industry-agent/src/sandbox/validation.ts";
 
@@ -67,12 +68,44 @@ const REPORT_LIMITS: ReportLimits = {
 	renderTimeoutMs: 1000,
 };
 
+const DEV_RUNTIME_SAFETY: SandboxRuntimeSafetyClaims = {
+	networkDisabled: false,
+	filesystemDisabled: false,
+	processSpawnDisabled: false,
+	environmentSecretsExposed: false,
+	importsDisabled: false,
+	dynamicCodeDisabled: false,
+	dataAccessMode: "QUERY_ID_ONLY",
+	abortTerminatesExecution: true,
+};
+
+function assertRequestedSafety(input: SandboxExecutorInput): void {
+	const requested = input.safety;
+	if (
+		requested.networkDisabled !== DEV_RUNTIME_SAFETY.networkDisabled ||
+		requested.filesystemDisabled !== DEV_RUNTIME_SAFETY.filesystemDisabled ||
+		requested.processSpawnDisabled !== DEV_RUNTIME_SAFETY.processSpawnDisabled ||
+		requested.environmentSecretsExposed !== DEV_RUNTIME_SAFETY.environmentSecretsExposed ||
+		requested.importsDisabled !== DEV_RUNTIME_SAFETY.importsDisabled ||
+		requested.dynamicCodeDisabled !== DEV_RUNTIME_SAFETY.dynamicCodeDisabled ||
+		requested.dataAccessMode !== DEV_RUNTIME_SAFETY.dataAccessMode ||
+		requested.abortTerminatesExecution !== DEV_RUNTIME_SAFETY.abortTerminatesExecution
+	) {
+		throw new Error(
+			"DevPythonSandboxExecutor does not satisfy the requested production sandbox safety contract; use an isolated executor instead",
+		);
+	}
+}
+
 export class DevPythonSandboxExecutor implements SandboxExecutor {
+	readonly safety: SandboxRuntimeSafetyClaims = DEV_RUNTIME_SAFETY;
+
 	async execute(
 		input: SandboxExecutorInput,
 		dataAccess: SandboxReadCapability,
 		signal: AbortSignal,
 	): Promise<SandboxExecutorResult> {
+		assertRequestedSafety(input);
 		const startedAtMs = Date.now();
 		const dir = mkdtempSync(join(tmpdir(), "pi-sandbox-"));
 		try {
@@ -87,14 +120,7 @@ export class DevPythonSandboxExecutor implements SandboxExecutor {
 					executedPythonSha256: pythonSha256(input.python),
 					cpuTimeMs: Date.now() - startedAtMs,
 					memoryPeakBytes: 0,
-					networkDisabled: true,
-					filesystemDisabled: true,
-					processSpawnDisabled: true,
-					environmentSecretsExposed: false,
-					importsDisabled: true,
-					dynamicCodeDisabled: true,
-					dataAccessMode: "QUERY_ID_ONLY",
-					abortTerminatesExecution: true,
+					...DEV_RUNTIME_SAFETY,
 				},
 			};
 		} finally {

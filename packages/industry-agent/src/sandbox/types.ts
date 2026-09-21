@@ -260,7 +260,6 @@ export interface SandboxExecutorResult {
 }
 
 export interface SandboxExecutor {
-	readonly safety: SandboxRuntimeSafetyClaims;
 	execute(
 		input: SandboxExecutorInput,
 		dataAccess: SandboxReadCapability,

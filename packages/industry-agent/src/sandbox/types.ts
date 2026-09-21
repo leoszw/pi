@@ -183,7 +183,18 @@ export interface SandboxReadCapability {
 	read(queryId: string): Promise<SandboxReadableDataset>;
 }
 
-export interface SandboxRuntimeSafetyContract {
+export interface SandboxRuntimeSafetyClaims {
+	networkDisabled: boolean;
+	filesystemDisabled: boolean;
+	processSpawnDisabled: boolean;
+	environmentSecretsExposed: boolean;
+	importsDisabled: boolean;
+	dynamicCodeDisabled: boolean;
+	dataAccessMode: string;
+	abortTerminatesExecution: boolean;
+}
+
+export interface SandboxRuntimeSafetyContract extends SandboxRuntimeSafetyClaims {
 	networkDisabled: true;
 	filesystemDisabled: true;
 	processSpawnDisabled: true;
@@ -204,7 +215,7 @@ export interface SandboxExecutorInput {
 	safety: SandboxRuntimeSafetyContract;
 }
 
-export interface SandboxRuntimeAttestation extends SandboxRuntimeSafetyContract {
+export interface SandboxRuntimeAttestation extends SandboxRuntimeSafetyClaims {
 	runtimeVersion: string;
 	executedPythonSha256: string;
 	cpuTimeMs: number;
@@ -249,6 +260,7 @@ export interface SandboxExecutorResult {
 }
 
 export interface SandboxExecutor {
+	readonly safety: SandboxRuntimeSafetyClaims;
 	execute(
 		input: SandboxExecutorInput,
 		dataAccess: SandboxReadCapability,

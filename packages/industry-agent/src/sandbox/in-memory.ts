@@ -18,7 +18,6 @@ import type {
 	SandboxReportBuilderInput,
 	SandboxRouteDecision,
 	SandboxRunResult,
-	SandboxRuntimeSafetyClaims,
 	SandboxSchemaDiscovery,
 	SandboxSchemaSnapshot,
 	SandboxToolCatalog,
@@ -116,20 +115,8 @@ export class StaticReadOnlyBroker implements SandboxDataAccessBroker {
 	}
 }
 
-const SAFE_SCRIPTED_EXECUTOR_CLAIMS: SandboxRuntimeSafetyClaims = {
-	networkDisabled: true,
-	filesystemDisabled: true,
-	processSpawnDisabled: true,
-	environmentSecretsExposed: false,
-	importsDisabled: true,
-	dynamicCodeDisabled: true,
-	dataAccessMode: "QUERY_ID_ONLY",
-	abortTerminatesExecution: true,
-};
-
 export class ScriptedSandboxExecutor implements SandboxExecutor {
 	readonly inputs: SandboxExecutorInput[] = [];
-	readonly safety: SandboxRuntimeSafetyClaims;
 	private readonly handler: (
 		input: SandboxExecutorInput,
 		dataAccess: SandboxReadCapability,
@@ -141,10 +128,8 @@ export class ScriptedSandboxExecutor implements SandboxExecutor {
 			dataAccess: SandboxReadCapability,
 			signal: AbortSignal,
 		) => Promise<SandboxExecutorResult> | SandboxExecutorResult,
-		safety: SandboxRuntimeSafetyClaims = SAFE_SCRIPTED_EXECUTOR_CLAIMS,
 	) {
 		this.handler = handler;
-		this.safety = { ...safety };
 	}
 	async execute(
 		input: SandboxExecutorInput,

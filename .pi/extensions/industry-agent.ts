@@ -2,12 +2,13 @@
  * Industry agent tools for pi.
  *
  * The chat conversation is the agent entry: the model can call curated BOQ data
- * queries, RAG document search, and the M12 sandbox pipeline to answer questions.
+ * queries and RAG document search to answer questions. The M12 sandbox analysis
+ * tool stays hidden until a production-isolated executor is configured.
  * Management-style views live behind the /industry command.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { buildRagCorpus, queryBoqData, sandboxAnalyze, searchRagDocuments } from "../../debug/industry-tools.ts";
+import { buildRagCorpus, queryBoqData, searchRagDocuments } from "../../debug/industry-tools.ts";
 import { createMysqlPool } from "../../debug/mysql-adapters.ts";
 
 export default function industryAgentExtension(pi: ExtensionAPI) {
@@ -39,7 +40,7 @@ export default function industryAgentExtension(pi: ExtensionAPI) {
 			"price_distribution=单价分布分析（均值/标准差/离散系数）。" +
 			"适合直接的事实型数据问题。",
 		promptSnippet: "Query curated BOQ/material data for the current project (read-only MySQL)",
-		promptGuidelines: ["For factual project data questions, prefer query_boq_data before sandbox_analyze."],
+		promptGuidelines: ["For factual project data questions, prefer query_boq_data."],
 		parameters: Type.Object({
 			kind: Type.Union([
 				Type.Literal("section_totals"),
@@ -84,27 +85,6 @@ export default function industryAgentExtension(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
-		name: "sandbox_analyze",
-		label: "沙箱深度分析",
-		description:
-			"触发只读沙箱分析流水线：自动发现数据库 schema、生成并校验 SQL/Python、在沙箱中执行、产出分析结论与报告。" +
-			"适合 query_boq_data 覆盖不了的开放式数据问题（多表关联、自定义聚合、排序对比等）。注意：耗时可能 1-3 分钟。",
-		promptSnippet: "Run the M12 sandbox analysis pipeline for open-ended data questions (slow)",
-		promptGuidelines: ["Use sandbox_analyze only when query_boq_data cannot answer the question."],
-		parameters: Type.Object({
-			goal: Type.String({ description: "分析目标（中文，具体、可量化）" }),
-			reportTitle: Type.Optional(Type.String({ description: "报告标题，默认「行业数据分析报告」" })),
-		}),
-		async execute(_toolCallId, params) {
-			const result = await sandboxAnalyze(pool, params);
-			const text = result.reportText
-				? `${result.reportText}\n\n（分析结论：${result.summary}）`
-				: `分析未完成（${result.status}）：${result.summary}`;
-			return textResult(text, { status: result.status });
-		},
-	});
-
 	pi.registerCommand("industry", {
 		description: "行业 agent 状态（数据连接/知识库）",
 		handler: async (_args, ctx) => {
@@ -115,7 +95,8 @@ export default function industryAgentExtension(pi: ExtensionAPI) {
 			}
 			const status = [
 				"行业 agent 状态：",
-				"- 工具：query_boq_data / search_documents / sandbox_analyze（已注册）",
+				"- 工具：query_boq_data / search_documents（已注册）",
+				"- 沙箱深度分析：未注册（等待满足生产隔离与 attestation 契约的执行器）",
 				"- MySQL：pi_query @ 127.0.0.1:3306（只读账号）",
 				`- 知识库：${corpusError ? `加载失败：${corpusError}` : `已加载 ${corpusState?.documentCount ?? 0} 篇文档（debug/rag-corpus）`}`,
 			].join("\n");
